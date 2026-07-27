@@ -1,8 +1,30 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #060910;
+  --foreground: #e8ecf3;
+
+  --color-bg: #060910;
+  --color-surface: #0d131e;
+  --color-surface-2: #131b29;
+  --color-line: #1d2635;
+  --color-line-soft: #161e2c;
+
+  --color-brand: #17c3a2;
+  --color-brand-dark: #0e9c82;
+  --color-brand-soft: #0d2620;
+
+  --color-gold: #e0b356;
+  --color-gold-soft: #2a2312;
+
+  --color-positive: #2fd88f;
+  --color-positive-soft: #0c2a1c;
+  --color-negative: #f16565;
+  --color-negative-soft: #2d1414;
+
+  --color-text: #e8ecf3;
+  --color-text-muted: #8894a8;
+  --color-text-faint: #58637a;
 }
 
 @theme inline {
@@ -10,17 +32,41 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-bg: var(--color-bg);
+  --color-surface: var(--color-surface);
+  --color-surface-2: var(--color-surface-2);
+  --color-line: var(--color-line);
+  --color-line-soft: var(--color-line-soft);
+
+  --color-brand: var(--color-brand);
+  --color-brand-dark: var(--color-brand-dark);
+  --color-brand-soft: var(--color-brand-soft);
+
+  --color-gold: var(--color-gold);
+  --color-gold-soft: var(--color-gold-soft);
+
+  --color-positive: var(--color-positive);
+  --color-positive-soft: var(--color-positive-soft);
+  --color-negative: var(--color-negative);
+  --color-negative-soft: var(--color-negative-soft);
+
+  --color-text: var(--color-text);
+  --color-text-muted: var(--color-text-muted);
+  --color-text-faint: var(--color-text-faint);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  background-image:
+    radial-gradient(ellipse 900px 500px at 15% -10%, rgba(23, 195, 162, 0.08), transparent),
+    radial-gradient(ellipse 700px 400px at 100% 0%, rgba(224, 179, 86, 0.05), transparent);
+  background-attachment: fixed;
+}
+
+::selection {
+  background: var(--color-brand);
+  color: #04120e;
 }

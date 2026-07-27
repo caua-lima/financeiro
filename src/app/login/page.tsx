@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/AuthContext";
+import { Logo } from "@/components/Logo";
 
 export default function LoginPage() {
   const { login, user } = useAuth();
@@ -32,41 +33,45 @@ export default function LoginPage() {
 
   return (
     <main className="flex flex-1 items-center justify-center p-6">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-sm space-y-4 rounded-2xl border border-neutral-800 bg-neutral-900 p-6"
-      >
-        <h1 className="text-xl font-semibold text-center">Financeiro</h1>
-        <p className="text-sm text-neutral-400 text-center">
-          Entre para ver seu controle financeiro
-        </p>
-        <div className="space-y-2">
-          <input
-            type="email"
-            required
-            placeholder="E-mail"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm outline-none focus:border-emerald-500"
-          />
-          <input
-            type="password"
-            required
-            placeholder="Senha"
-            value={senha}
-            onChange={(e) => setSenha(e.target.value)}
-            className="w-full rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm outline-none focus:border-emerald-500"
-          />
+      <div className="w-full max-w-sm">
+        <div className="flex justify-center mb-8">
+          <Logo size="lg" />
         </div>
-        {erro && <p className="text-sm text-red-400">{erro}</p>}
-        <button
-          type="submit"
-          disabled={enviando}
-          className="w-full rounded-lg bg-emerald-600 py-2 text-sm font-medium hover:bg-emerald-500 disabled:opacity-50"
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-4 rounded-2xl border border-line bg-surface p-6 shadow-[0_0_0_1px_rgba(23,195,162,0.04),0_20px_60px_-20px_rgba(0,0,0,0.6)]"
         >
-          {enviando ? "Entrando..." : "Entrar"}
-        </button>
-      </form>
+          <p className="text-sm text-text-muted text-center">
+            Entre para ver seu controle financeiro
+          </p>
+          <div className="space-y-2">
+            <input
+              type="email"
+              required
+              placeholder="E-mail"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-brand"
+            />
+            <input
+              type="password"
+              required
+              placeholder="Senha"
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              className="w-full rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-brand"
+            />
+          </div>
+          {erro && <p className="text-sm text-negative">{erro}</p>}
+          <button
+            type="submit"
+            disabled={enviando}
+            className="w-full rounded-lg bg-brand py-2 text-sm font-medium text-[#04120e] hover:bg-brand-dark disabled:opacity-50 transition-colors"
+          >
+            {enviando ? "Entrando..." : "Entrar"}
+          </button>
+        </form>
+      </div>
     </main>
   );
 }

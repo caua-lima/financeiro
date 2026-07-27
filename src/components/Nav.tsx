@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/AuthContext";
+import { Logo } from "./Logo";
 
 const links = [
   { href: "/", label: "Resumo", icon: "📊" },
@@ -23,17 +24,17 @@ export function Nav() {
 
   return (
     <>
-      <header className="hidden md:flex items-center justify-between border-b border-neutral-800 px-6 py-4">
-        <span className="font-semibold">Financeiro</span>
+      <header className="hidden md:flex items-center justify-between border-b border-line px-6 py-3.5">
+        <Logo />
         <nav className="flex gap-1">
           {links.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className={`rounded-lg px-3 py-1.5 text-sm ${
+              className={`rounded-lg px-3 py-1.5 text-sm transition-colors ${
                 pathname === link.href
-                  ? "bg-emerald-600 text-white"
-                  : "text-neutral-400 hover:text-neutral-100"
+                  ? "bg-brand-soft text-brand"
+                  : "text-text-muted hover:text-text"
               }`}
             >
               {link.label}
@@ -42,21 +43,29 @@ export function Nav() {
         </nav>
         <button
           onClick={handleLogout}
-          className="text-sm text-neutral-400 hover:text-neutral-100"
+          className="text-sm text-text-muted hover:text-text"
         >
           Sair
         </button>
       </header>
 
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-10 flex border-t border-neutral-800 bg-neutral-950/95 backdrop-blur pb-[env(safe-area-inset-bottom)]">
+      <header className="md:hidden flex items-center justify-between border-b border-line px-4 py-3">
+        <Logo />
+        <button
+          onClick={handleLogout}
+          className="text-sm text-text-muted hover:text-text"
+        >
+          Sair
+        </button>
+      </header>
+
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-10 flex border-t border-line bg-surface/95 backdrop-blur pb-[env(safe-area-inset-bottom)]">
         {links.map((link) => (
           <Link
             key={link.href}
             href={link.href}
-            className={`flex flex-1 flex-col items-center gap-0.5 py-2.5 text-xs ${
-              pathname === link.href
-                ? "text-emerald-400"
-                : "text-neutral-500"
+            className={`flex flex-1 flex-col items-center gap-0.5 py-2.5 text-xs transition-colors ${
+              pathname === link.href ? "text-brand" : "text-text-faint"
             }`}
           >
             <span className="text-lg leading-none">{link.icon}</span>

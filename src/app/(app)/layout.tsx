@@ -22,7 +22,7 @@ export default function AppLayout({
   if (loading || !user) {
     return (
       <main className="flex flex-1 items-center justify-center">
-        <p className="text-neutral-500 text-sm">Carregando...</p>
+        <p className="text-text-faint text-sm">Carregando...</p>
       </main>
     );
   }

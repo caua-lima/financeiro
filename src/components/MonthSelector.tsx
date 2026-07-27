@@ -19,7 +19,7 @@ export function MonthSelector({
     <div className="flex items-center justify-between gap-3 mb-6">
       <button
         onClick={() => onChange(somarMes(mes, -1))}
-        className="rounded-lg border border-neutral-800 px-3 py-1.5 text-sm text-neutral-400 hover:text-neutral-100"
+        className="rounded-lg border border-line px-3 py-1.5 text-sm text-text-muted hover:text-text hover:border-brand/40 transition-colors"
       >
         ←
       </button>
@@ -28,7 +28,7 @@ export function MonthSelector({
       </span>
       <button
         onClick={() => onChange(somarMes(mes, 1))}
-        className="rounded-lg border border-neutral-800 px-3 py-1.5 text-sm text-neutral-400 hover:text-neutral-100"
+        className="rounded-lg border border-line px-3 py-1.5 text-sm text-text-muted hover:text-text hover:border-brand/40 transition-colors"
       >
         →
       </button>

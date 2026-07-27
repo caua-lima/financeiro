@@ -21,20 +21,20 @@ export default function DashboardPage() {
       <MonthSelector mes={mes} onChange={setMes} />
 
       {carregando ? (
-        <p className="text-sm text-neutral-500">Carregando...</p>
+        <p className="text-sm text-text-faint">Carregando...</p>
       ) : (
         <div className="space-y-4">
           <div
             className={`rounded-2xl border p-6 text-center ${
               sobra >= 0
-                ? "border-emerald-800 bg-emerald-950/40"
-                : "border-red-800 bg-red-950/40"
+                ? "border-brand/25 bg-positive-soft"
+                : "border-negative/40 bg-negative-soft"
             }`}
           >
-            <p className="text-sm text-neutral-400">Vai sobrar</p>
+            <p className="text-sm text-text-muted">Vai sobrar</p>
             <p
               className={`text-3xl font-bold mt-1 ${
-                sobra >= 0 ? "text-emerald-400" : "text-red-400"
+                sobra >= 0 ? "text-positive" : "text-negative"
               }`}
             >
               {formatarMoeda(sobra)}
@@ -42,25 +42,21 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-3 gap-3">
-            <ResumoCard
-              label="Ganhos"
-              valor={ganhos.total}
-              cor="text-emerald-400"
-            />
+            <ResumoCard label="Ganhos" valor={ganhos.total} cor="text-positive" />
             <ResumoCard
               label="Contas fixas"
               valor={contas.total}
-              cor="text-orange-400"
+              cor="text-gold"
             />
             <ResumoCard
               label="Parcelas"
               valor={parcelas.total}
-              cor="text-orange-400"
+              cor="text-gold"
             />
           </div>
 
-          <div className="rounded-2xl border border-neutral-800 p-4">
-            <h2 className="text-sm font-medium text-neutral-300 mb-3">
+          <div className="rounded-2xl border border-line bg-surface p-4">
+            <h2 className="text-sm font-medium text-text-muted mb-3">
               Detalhamento
             </h2>
             <div className="space-y-2 text-sm">
@@ -75,9 +71,9 @@ export default function DashboardPage() {
                 valor={parcelas.total}
                 sinal="-"
               />
-              <div className="border-t border-neutral-800 pt-2 flex justify-between font-semibold">
+              <div className="border-t border-line pt-2 flex justify-between font-semibold">
                 <span>Sobra</span>
-                <span className={sobra >= 0 ? "text-emerald-400" : "text-red-400"}>
+                <span className={sobra >= 0 ? "text-positive" : "text-negative"}>
                   {formatarMoeda(sobra)}
                 </span>
               </div>
@@ -99,8 +95,8 @@ function ResumoCard({
   cor: string;
 }) {
   return (
-    <div className="rounded-xl border border-neutral-800 p-3 text-center">
-      <p className="text-xs text-neutral-500">{label}</p>
+    <div className="rounded-xl border border-line bg-surface p-3 text-center">
+      <p className="text-xs text-text-faint">{label}</p>
       <p className={`text-sm font-semibold mt-1 ${cor}`}>
         {formatarMoeda(valor)}
       </p>
@@ -118,9 +114,9 @@ function Linha({
   sinal: "+" | "-";
 }) {
   return (
-    <div className="flex justify-between text-neutral-400">
+    <div className="flex justify-between text-text-muted">
       <span>{label}</span>
-      <span className={sinal === "+" ? "text-emerald-400" : "text-orange-400"}>
+      <span className={sinal === "+" ? "text-positive" : "text-gold"}>
         {sinal} {formatarMoeda(valor)}
       </span>
     </div>
