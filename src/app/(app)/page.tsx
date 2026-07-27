@@ -6,6 +6,7 @@ import { useGanhos } from "@/lib/useGanhos";
 import { useContasFixas } from "@/lib/useContasFixas";
 import { useParcelas } from "@/lib/useParcelas";
 import { MonthSelector } from "@/components/MonthSelector";
+import { ErroBanner } from "@/components/ErroBanner";
 
 export default function DashboardPage() {
   const [mes, setMes] = useState(mesAtual());
@@ -15,10 +16,12 @@ export default function DashboardPage() {
 
   const sobra = ganhos.total - contas.total - parcelas.total;
   const carregando = ganhos.loading || contas.loading || parcelas.loading;
+  const erro = ganhos.erro || contas.erro || parcelas.erro;
 
   return (
     <div>
       <MonthSelector mes={mes} onChange={setMes} />
+      <ErroBanner mensagem={erro} />
 
       {carregando ? (
         <p className="text-sm text-text-faint">Carregando...</p>

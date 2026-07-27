@@ -5,6 +5,7 @@ import { mesAtual, formatarMoeda, Ganho } from "@/lib/types";
 import { useGanhos } from "@/lib/useGanhos";
 import { MonthSelector } from "@/components/MonthSelector";
 import { MoneyInput } from "@/components/MoneyInput";
+import { ErroBanner } from "@/components/ErroBanner";
 
 type Tipo = "recorrente" | "pontual";
 
@@ -14,6 +15,7 @@ export default function GanhosPage() {
     recorrentes,
     pontuais,
     loading,
+    erro,
     total,
     adicionarRecorrente,
     adicionarPontual,
@@ -42,6 +44,7 @@ export default function GanhosPage() {
   return (
     <div>
       <MonthSelector mes={mes} onChange={setMes} />
+      <ErroBanner mensagem={erro} />
 
       <form onSubmit={handleSubmit} className="space-y-2 mb-6">
         <div className="flex gap-2 flex-col sm:flex-row">

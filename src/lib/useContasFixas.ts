@@ -12,11 +12,13 @@ import {
 import { db } from "./firebase";
 import { ContaFixa } from "./types";
 import { useAuth } from "./AuthContext";
+import { mensagemErro } from "./erroFirebase";
 
 export function useContasFixas() {
   const { user } = useAuth();
   const [todas, setTodas] = useState<ContaFixa[]>([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -26,6 +28,11 @@ export function useContasFixas() {
         setTodas(
           snap.docs.map((d) => ({ id: d.id, ...d.data() } as ContaFixa))
         );
+        setLoading(false);
+        setErro(null);
+      },
+      (e) => {
+        setErro(mensagemErro(e));
         setLoading(false);
       }
     );
@@ -39,13 +46,18 @@ export function useContasFixas() {
 
   async function adicionar(nome: string, valor: number, categoria: string) {
     if (!user) return;
-    await addDoc(collection(db, "usuarios", user.uid, "contasFixas"), {
-      nome,
-      valor,
-      categoria,
-      ativa: true,
-      criadoEm: Date.now(),
-    });
+    try {
+      await addDoc(collection(db, "usuarios", user.uid, "contasFixas"), {
+        nome,
+        valor,
+        categoria,
+        ativa: true,
+        criadoEm: Date.now(),
+      });
+      setErro(null);
+    } catch (e) {
+      setErro(mensagemErro(e));
+    }
   }
 
   async function editar(
@@ -53,24 +65,48 @@ export function useContasFixas() {
     dados: { nome: string; valor: number; categoria: string }
   ) {
     if (!user) return;
-    await updateDoc(doc(db, "usuarios", user.uid, "contasFixas", id), dados);
+    try {
+      await updateDoc(doc(db, "usuarios", user.uid, "contasFixas", id), dados);
+      setErro(null);
+    } catch (e) {
+      setErro(mensagemErro(e));
+    }
   }
 
   async function remover(id: string) {
     if (!user) return;
-    await deleteDoc(doc(db, "usuarios", user.uid, "contasFixas", id));
+    try {
+      await deleteDoc(doc(db, "usuarios", user.uid, "contasFixas", id));
+      setErro(null);
+    } catch (e) {
+      setErro(mensagemErro(e));
+    }
   }
 
   async function alternarAtiva(id: string, ativa: boolean) {
     if (!user) return;
-    await updateDoc(doc(db, "usuarios", user.uid, "contasFixas", id), {
-      ativa,
-    });
+    try {
+      await updateDoc(doc(db, "usuarios", user.uid, "contasFixas", id), {
+        ativa,
+      });
+      setErro(null);
+    } catch (e) {
+      setErro(mensagemErro(e));
+    }
   }
 
   const total = contas
     .filter((c) => c.ativa)
     .reduce((acc, c) => acc + c.valor, 0);
 
-  return { contas, loading, total, adicionar, editar, remover, alternarAtiva };
+  return {
+    contas,
+    loading,
+    erro,
+    total,
+    adicionar,
+    editar,
+    remover,
+    alternarAtiva,
+  };
 }

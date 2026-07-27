@@ -12,11 +12,13 @@ import {
 import { db } from "./firebase";
 import { Parcela } from "./types";
 import { useAuth } from "./AuthContext";
+import { mensagemErro } from "./erroFirebase";
 
 export function useParcelas() {
   const { user } = useAuth();
   const [todas, setTodas] = useState<Parcela[]>([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -26,6 +28,11 @@ export function useParcelas() {
         setTodas(
           snap.docs.map((d) => ({ id: d.id, ...d.data() } as Parcela))
         );
+        setLoading(false);
+        setErro(null);
+      },
+      (e) => {
+        setErro(mensagemErro(e));
         setLoading(false);
       }
     );
@@ -44,13 +51,18 @@ export function useParcelas() {
     parcelasRestantes: number
   ) {
     if (!user) return;
-    await addDoc(collection(db, "usuarios", user.uid, "parcelas"), {
-      nome,
-      valorParcela,
-      totalParcelas,
-      parcelasRestantes,
-      criadoEm: Date.now(),
-    });
+    try {
+      await addDoc(collection(db, "usuarios", user.uid, "parcelas"), {
+        nome,
+        valorParcela,
+        totalParcelas,
+        parcelasRestantes,
+        criadoEm: Date.now(),
+      });
+      setErro(null);
+    } catch (e) {
+      setErro(mensagemErro(e));
+    }
   }
 
   async function editar(
@@ -63,20 +75,35 @@ export function useParcelas() {
     }
   ) {
     if (!user) return;
-    await updateDoc(doc(db, "usuarios", user.uid, "parcelas", id), dados);
+    try {
+      await updateDoc(doc(db, "usuarios", user.uid, "parcelas", id), dados);
+      setErro(null);
+    } catch (e) {
+      setErro(mensagemErro(e));
+    }
   }
 
   async function remover(id: string) {
     if (!user) return;
-    await deleteDoc(doc(db, "usuarios", user.uid, "parcelas", id));
+    try {
+      await deleteDoc(doc(db, "usuarios", user.uid, "parcelas", id));
+      setErro(null);
+    } catch (e) {
+      setErro(mensagemErro(e));
+    }
   }
 
   async function darBaixa(id: string, parcelasRestantes: number) {
     if (!user) return;
     const novoValor = Math.max(0, parcelasRestantes - 1);
-    await updateDoc(doc(db, "usuarios", user.uid, "parcelas", id), {
-      parcelasRestantes: novoValor,
-    });
+    try {
+      await updateDoc(doc(db, "usuarios", user.uid, "parcelas", id), {
+        parcelasRestantes: novoValor,
+      });
+      setErro(null);
+    } catch (e) {
+      setErro(mensagemErro(e));
+    }
   }
 
   const ativas = parcelas.filter((p) => p.parcelasRestantes > 0);
@@ -86,6 +113,7 @@ export function useParcelas() {
     parcelas,
     ativas,
     loading,
+    erro,
     total,
     adicionar,
     editar,

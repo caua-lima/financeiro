@@ -4,10 +4,19 @@ import { FormEvent, useState } from "react";
 import { formatarMoeda, ContaFixa } from "@/lib/types";
 import { useContasFixas } from "@/lib/useContasFixas";
 import { MoneyInput } from "@/components/MoneyInput";
+import { ErroBanner } from "@/components/ErroBanner";
 
 export default function ContasPage() {
-  const { contas, loading, total, adicionar, editar, remover, alternarAtiva } =
-    useContasFixas();
+  const {
+    contas,
+    loading,
+    erro,
+    total,
+    adicionar,
+    editar,
+    remover,
+    alternarAtiva,
+  } = useContasFixas();
   const [nome, setNome] = useState("");
   const [valor, setValor] = useState(0);
   const [categoria, setCategoria] = useState("");
@@ -26,6 +35,7 @@ export default function ContasPage() {
   return (
     <div>
       <h1 className="text-lg font-semibold mb-4">Contas fixas</h1>
+      <ErroBanner mensagem={erro} />
 
       <form
         onSubmit={handleSubmit}

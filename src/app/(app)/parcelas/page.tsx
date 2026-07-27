@@ -4,10 +4,19 @@ import { FormEvent, useState } from "react";
 import { formatarMoeda, Parcela } from "@/lib/types";
 import { useParcelas } from "@/lib/useParcelas";
 import { MoneyInput } from "@/components/MoneyInput";
+import { ErroBanner } from "@/components/ErroBanner";
 
 export default function ParcelasPage() {
-  const { parcelas, loading, total, adicionar, editar, remover, darBaixa } =
-    useParcelas();
+  const {
+    parcelas,
+    loading,
+    erro,
+    total,
+    adicionar,
+    editar,
+    remover,
+    darBaixa,
+  } = useParcelas();
   const [nome, setNome] = useState("");
   const [valorParcela, setValorParcela] = useState(0);
   const [totalParcelas, setTotalParcelas] = useState("");
@@ -32,6 +41,7 @@ export default function ParcelasPage() {
   return (
     <div>
       <h1 className="text-lg font-semibold mb-4">Parcelas</h1>
+      <ErroBanner mensagem={erro} />
 
       <form
         onSubmit={handleSubmit}

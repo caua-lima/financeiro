@@ -12,11 +12,13 @@ import {
 import { db } from "./firebase";
 import { Ganho } from "./types";
 import { useAuth } from "./AuthContext";
+import { mensagemErro } from "./erroFirebase";
 
 export function useGanhos(mes: string) {
   const { user } = useAuth();
   const [todos, setTodos] = useState<Ganho[]>([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -24,6 +26,11 @@ export function useGanhos(mes: string) {
       collection(db, "usuarios", user.uid, "ganhos"),
       (snap) => {
         setTodos(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Ganho)));
+        setLoading(false);
+        setErro(null);
+      },
+      (e) => {
+        setErro(mensagemErro(e));
         setLoading(false);
       }
     );
@@ -48,24 +55,34 @@ export function useGanhos(mes: string) {
 
   async function adicionarRecorrente(descricao: string, valor: number) {
     if (!user) return;
-    await addDoc(collection(db, "usuarios", user.uid, "ganhos"), {
-      tipo: "recorrente",
-      ativo: true,
-      descricao,
-      valor,
-      criadoEm: Date.now(),
-    });
+    try {
+      await addDoc(collection(db, "usuarios", user.uid, "ganhos"), {
+        tipo: "recorrente",
+        ativo: true,
+        descricao,
+        valor,
+        criadoEm: Date.now(),
+      });
+      setErro(null);
+    } catch (e) {
+      setErro(mensagemErro(e));
+    }
   }
 
   async function adicionarPontual(descricao: string, valor: number) {
     if (!user) return;
-    await addDoc(collection(db, "usuarios", user.uid, "ganhos"), {
-      tipo: "pontual",
-      mes,
-      descricao,
-      valor,
-      criadoEm: Date.now(),
-    });
+    try {
+      await addDoc(collection(db, "usuarios", user.uid, "ganhos"), {
+        tipo: "pontual",
+        mes,
+        descricao,
+        valor,
+        criadoEm: Date.now(),
+      });
+      setErro(null);
+    } catch (e) {
+      setErro(mensagemErro(e));
+    }
   }
 
   async function editar(
@@ -73,17 +90,32 @@ export function useGanhos(mes: string) {
     dados: { descricao: string; valor: number }
   ) {
     if (!user) return;
-    await updateDoc(doc(db, "usuarios", user.uid, "ganhos", id), dados);
+    try {
+      await updateDoc(doc(db, "usuarios", user.uid, "ganhos", id), dados);
+      setErro(null);
+    } catch (e) {
+      setErro(mensagemErro(e));
+    }
   }
 
   async function remover(id: string) {
     if (!user) return;
-    await deleteDoc(doc(db, "usuarios", user.uid, "ganhos", id));
+    try {
+      await deleteDoc(doc(db, "usuarios", user.uid, "ganhos", id));
+      setErro(null);
+    } catch (e) {
+      setErro(mensagemErro(e));
+    }
   }
 
   async function alternarAtivo(id: string, ativo: boolean) {
     if (!user) return;
-    await updateDoc(doc(db, "usuarios", user.uid, "ganhos", id), { ativo });
+    try {
+      await updateDoc(doc(db, "usuarios", user.uid, "ganhos", id), { ativo });
+      setErro(null);
+    } catch (e) {
+      setErro(mensagemErro(e));
+    }
   }
 
   const totalRecorrentes = recorrentes
@@ -96,6 +128,7 @@ export function useGanhos(mes: string) {
     recorrentes,
     pontuais,
     loading,
+    erro,
     total,
     adicionarRecorrente,
     adicionarPontual,
