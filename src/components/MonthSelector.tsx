@@ -1,6 +1,6 @@
 "use client";
 
-import { formatarMes } from "@/lib/types";
+import { formatarMes, mesAtual } from "@/lib/types";
 
 function somarMes(mes: string, delta: number): string {
   const [ano, m] = mes.split("-").map(Number);
@@ -15,11 +15,15 @@ export function MonthSelector({
   mes: string;
   onChange: (mes: string) => void;
 }) {
+  const minimo = mesAtual();
+  const podeVoltar = mes > minimo;
+
   return (
     <div className="flex items-center justify-between gap-3 mb-6">
       <button
-        onClick={() => onChange(somarMes(mes, -1))}
-        className="rounded-lg border border-line px-3 py-1.5 text-sm text-text-muted hover:text-text hover:border-brand/40 transition-colors"
+        onClick={() => podeVoltar && onChange(somarMes(mes, -1))}
+        disabled={!podeVoltar}
+        className="rounded-lg border border-line px-3 py-1.5 text-sm text-text-muted transition-colors enabled:hover:text-text enabled:hover:border-brand/40 disabled:opacity-30 disabled:cursor-not-allowed"
       >
         ←
       </button>
