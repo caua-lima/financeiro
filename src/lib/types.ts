@@ -1,6 +1,10 @@
+export type TipoGanho = "recorrente" | "pontual";
+
 export interface Ganho {
   id: string;
-  mes: string; // "2026-07"
+  tipo: TipoGanho;
+  mes?: string; // "2026-07" — só existe quando tipo === "pontual"
+  ativo?: boolean; // só relevante quando tipo === "recorrente"
   descricao: string;
   valor: number;
   criadoEm: number;

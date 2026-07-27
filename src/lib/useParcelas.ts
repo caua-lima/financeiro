@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   collection,
   onSnapshot,
@@ -8,8 +8,6 @@ import {
   deleteDoc,
   doc,
   updateDoc,
-  orderBy,
-  query,
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { Parcela } from "./types";
@@ -17,23 +15,27 @@ import { useAuth } from "./AuthContext";
 
 export function useParcelas() {
   const { user } = useAuth();
-  const [parcelas, setParcelas] = useState<Parcela[]>([]);
+  const [todas, setTodas] = useState<Parcela[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
-    const q = query(
+    const unsubscribe = onSnapshot(
       collection(db, "usuarios", user.uid, "parcelas"),
-      orderBy("criadoEm", "desc")
+      (snap) => {
+        setTodas(
+          snap.docs.map((d) => ({ id: d.id, ...d.data() } as Parcela))
+        );
+        setLoading(false);
+      }
     );
-    const unsubscribe = onSnapshot(q, (snap) => {
-      setParcelas(
-        snap.docs.map((d) => ({ id: d.id, ...d.data() } as Parcela))
-      );
-      setLoading(false);
-    });
     return unsubscribe;
   }, [user]);
+
+  const parcelas = useMemo(
+    () => [...todas].sort((a, b) => b.criadoEm - a.criadoEm),
+    [todas]
+  );
 
   async function adicionar(
     nome: string,
@@ -49,6 +51,19 @@ export function useParcelas() {
       parcelasRestantes,
       criadoEm: Date.now(),
     });
+  }
+
+  async function editar(
+    id: string,
+    dados: {
+      nome: string;
+      valorParcela: number;
+      totalParcelas: number;
+      parcelasRestantes: number;
+    }
+  ) {
+    if (!user) return;
+    await updateDoc(doc(db, "usuarios", user.uid, "parcelas", id), dados);
   }
 
   async function remover(id: string) {
@@ -67,5 +82,14 @@ export function useParcelas() {
   const ativas = parcelas.filter((p) => p.parcelasRestantes > 0);
   const total = ativas.reduce((acc, p) => acc + p.valorParcela, 0);
 
-  return { parcelas, ativas, loading, total, adicionar, remover, darBaixa };
+  return {
+    parcelas,
+    ativas,
+    loading,
+    total,
+    adicionar,
+    editar,
+    remover,
+    darBaixa,
+  };
 }

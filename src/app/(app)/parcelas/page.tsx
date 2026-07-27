@@ -1,29 +1,32 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { formatarMoeda } from "@/lib/types";
+import { formatarMoeda, Parcela } from "@/lib/types";
 import { useParcelas } from "@/lib/useParcelas";
+import { MoneyInput } from "@/components/MoneyInput";
 
 export default function ParcelasPage() {
-  const { parcelas, loading, total, adicionar, remover, darBaixa } =
+  const { parcelas, loading, total, adicionar, editar, remover, darBaixa } =
     useParcelas();
   const [nome, setNome] = useState("");
-  const [valorParcela, setValorParcela] = useState("");
+  const [valorParcela, setValorParcela] = useState(0);
   const [totalParcelas, setTotalParcelas] = useState("");
   const [pagas, setPagas] = useState("");
 
-  async function handleSubmit(e: FormEvent) {
+  function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    const vParcela = parseFloat(valorParcela.replace(",", "."));
+    const nomeAparado = nome.trim();
     const vTotal = parseInt(totalParcelas, 10);
+    if (!nomeAparado || !valorParcela || !vTotal) return;
     const vPagas = pagas ? Math.min(parseInt(pagas, 10), vTotal) : 0;
-    if (!nome.trim() || !vParcela || !vTotal) return;
     const vRestantes = Math.max(0, vTotal - vPagas);
-    await adicionar(nome.trim(), vParcela, vTotal, vRestantes);
     setNome("");
-    setValorParcela("");
+    setValorParcela(0);
     setTotalParcelas("");
     setPagas("");
+    adicionar(nomeAparado, valorParcela, vTotal, vRestantes).catch(
+      console.error
+    );
   }
 
   return (
@@ -40,11 +43,10 @@ export default function ParcelasPage() {
           onChange={(e) => setNome(e.target.value)}
           className="col-span-2 rounded-lg border border-line bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
         />
-        <input
-          placeholder="Valor parcela"
-          inputMode="decimal"
+        <MoneyInput
           value={valorParcela}
-          onChange={(e) => setValorParcela(e.target.value)}
+          onChange={setValorParcela}
+          placeholder="Valor parcela"
           className="rounded-lg border border-line bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
         />
         <input
@@ -85,46 +87,154 @@ export default function ParcelasPage() {
       ) : (
         <ul className="space-y-2">
           {parcelas.map((p) => (
-            <li
+            <ItemParcela
               key={p.id}
-              className={`rounded-xl border bg-surface px-4 py-3 ${
-                p.parcelasRestantes > 0
-                  ? "border-line"
-                  : "border-line-soft opacity-50"
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <p className="text-sm">{p.nome}</p>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-gold">
-                    {formatarMoeda(p.valorParcela)}
-                  </span>
-                  <button
-                    onClick={() => remover(p.id)}
-                    className="text-text-faint hover:text-negative text-sm"
-                    aria-label="Remover"
-                  >
-                    ✕
-                  </button>
-                </div>
-              </div>
-              <div className="flex items-center justify-between mt-2">
-                <p className="text-xs text-text-faint">
-                  Faltam {p.parcelasRestantes} de {p.totalParcelas}
-                </p>
-                {p.parcelasRestantes > 0 && (
-                  <button
-                    onClick={() => darBaixa(p.id, p.parcelasRestantes)}
-                    className="text-xs text-brand hover:text-brand-dark"
-                  >
-                    Dar baixa neste mês
-                  </button>
-                )}
-              </div>
-            </li>
+              parcela={p}
+              onEditar={editar}
+              onRemover={remover}
+              onDarBaixa={darBaixa}
+            />
           ))}
         </ul>
       )}
     </div>
+  );
+}
+
+function ItemParcela({
+  parcela,
+  onEditar,
+  onRemover,
+  onDarBaixa,
+}: {
+  parcela: Parcela;
+  onEditar: (
+    id: string,
+    dados: {
+      nome: string;
+      valorParcela: number;
+      totalParcelas: number;
+      parcelasRestantes: number;
+    }
+  ) => void;
+  onRemover: (id: string) => void;
+  onDarBaixa: (id: string, parcelasRestantes: number) => void;
+}) {
+  const [editando, setEditando] = useState(false);
+  const [nome, setNome] = useState(parcela.nome);
+  const [valorParcela, setValorParcela] = useState(parcela.valorParcela);
+  const [totalParcelas, setTotalParcelas] = useState(
+    String(parcela.totalParcelas)
+  );
+  const [pagas, setPagas] = useState(
+    String(parcela.totalParcelas - parcela.parcelasRestantes)
+  );
+
+  function salvar() {
+    const nomeAparado = nome.trim();
+    const vTotal = parseInt(totalParcelas, 10);
+    if (!nomeAparado || !valorParcela || !vTotal) return;
+    const vPagas = pagas ? Math.min(parseInt(pagas, 10), vTotal) : 0;
+    onEditar(parcela.id, {
+      nome: nomeAparado,
+      valorParcela,
+      totalParcelas: vTotal,
+      parcelasRestantes: Math.max(0, vTotal - vPagas),
+    });
+    setEditando(false);
+  }
+
+  if (editando) {
+    return (
+      <li className="rounded-xl border border-brand/40 bg-surface px-4 py-3 space-y-2">
+        <input
+          value={nome}
+          onChange={(e) => setNome(e.target.value)}
+          className="w-full rounded-lg border border-line bg-surface-2 px-2 py-1.5 text-sm outline-none focus:border-brand"
+        />
+        <div className="grid grid-cols-3 gap-2">
+          <MoneyInput
+            value={valorParcela}
+            onChange={setValorParcela}
+            placeholder="Valor parcela"
+            className="rounded-lg border border-line bg-surface-2 px-2 py-1.5 text-sm outline-none focus:border-brand"
+          />
+          <input
+            placeholder="Total"
+            inputMode="numeric"
+            value={totalParcelas}
+            onChange={(e) => setTotalParcelas(e.target.value)}
+            className="rounded-lg border border-line bg-surface-2 px-2 py-1.5 text-sm outline-none focus:border-brand"
+          />
+          <input
+            placeholder="Já pagas"
+            inputMode="numeric"
+            value={pagas}
+            onChange={(e) => setPagas(e.target.value)}
+            className="rounded-lg border border-line bg-surface-2 px-2 py-1.5 text-sm outline-none focus:border-brand"
+          />
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={salvar}
+            className="rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-[#04120e]"
+          >
+            Salvar
+          </button>
+          <button
+            onClick={() => setEditando(false)}
+            className="rounded-lg border border-line px-3 py-1.5 text-xs text-text-muted"
+          >
+            Cancelar
+          </button>
+        </div>
+      </li>
+    );
+  }
+
+  return (
+    <li
+      className={`rounded-xl border bg-surface px-4 py-3 ${
+        parcela.parcelasRestantes > 0
+          ? "border-line"
+          : "border-line-soft opacity-50"
+      }`}
+    >
+      <div className="flex items-center justify-between">
+        <p className="text-sm">{parcela.nome}</p>
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium text-gold">
+            {formatarMoeda(parcela.valorParcela)}
+          </span>
+          <button
+            onClick={() => setEditando(true)}
+            className="text-text-faint hover:text-brand text-sm"
+            aria-label="Editar"
+          >
+            ✎
+          </button>
+          <button
+            onClick={() => onRemover(parcela.id)}
+            className="text-text-faint hover:text-negative text-sm"
+            aria-label="Remover"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
+      <div className="flex items-center justify-between mt-2">
+        <p className="text-xs text-text-faint">
+          Faltam {parcela.parcelasRestantes} de {parcela.totalParcelas}
+        </p>
+        {parcela.parcelasRestantes > 0 && (
+          <button
+            onClick={() => onDarBaixa(parcela.id, parcela.parcelasRestantes)}
+            className="text-xs text-brand hover:text-brand-dark"
+          >
+            Dar baixa neste mês
+          </button>
+        )}
+      </div>
+    </li>
   );
 }
