@@ -10,7 +10,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { db } from "./firebase";
-import { Parcela } from "./types";
+import { Parcela, TipoParcela } from "./types";
 import { useAuth } from "./AuthContext";
 import { mensagemErro } from "./erroFirebase";
 
@@ -48,11 +48,15 @@ export function useParcelas() {
     nome: string,
     valorParcela: number,
     totalParcelas: number,
-    parcelasRestantes: number
+    parcelasRestantes: number,
+    tipo: TipoParcela,
+    cartaoId?: string
   ) {
     if (!user) return;
     try {
       await addDoc(collection(db, "usuarios", user.uid, "parcelas"), {
+        tipo,
+        ...(tipo === "cartao" && cartaoId ? { cartaoId } : {}),
         nome,
         valorParcela,
         totalParcelas,
@@ -72,11 +76,17 @@ export function useParcelas() {
       valorParcela: number;
       totalParcelas: number;
       parcelasRestantes: number;
+      tipo: TipoParcela;
+      cartaoId?: string;
     }
   ) {
     if (!user) return;
     try {
-      await updateDoc(doc(db, "usuarios", user.uid, "parcelas", id), dados);
+      const { cartaoId, ...resto } = dados;
+      await updateDoc(doc(db, "usuarios", user.uid, "parcelas", id), {
+        ...resto,
+        cartaoId: dados.tipo === "cartao" && cartaoId ? cartaoId : null,
+      });
       setErro(null);
     } catch (e) {
       setErro(mensagemErro(e));

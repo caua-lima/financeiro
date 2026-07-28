@@ -19,12 +19,22 @@ export interface ContaFixa {
   criadoEm: number;
 }
 
+export type TipoParcela = "cartao" | "financiamento";
+
 export interface Parcela {
   id: string;
+  tipo: TipoParcela;
+  cartaoId?: string; // só existe quando tipo === "cartao"
   nome: string;
   valorParcela: number;
   totalParcelas: number;
   parcelasRestantes: number;
+  criadoEm: number;
+}
+
+export interface Cartao {
+  id: string;
+  nome: string;
   criadoEm: number;
 }
 
