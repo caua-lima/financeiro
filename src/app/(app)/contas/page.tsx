@@ -1,10 +1,29 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { formatarMoeda, ContaFixa } from "@/lib/types";
+import { CATEGORIAS_CONTAS, iconeCategoria } from "@/lib/categorias";
 import { useContasFixas } from "@/lib/useContasFixas";
 import { MoneyInput } from "@/components/MoneyInput";
 import { ErroBanner } from "@/components/ErroBanner";
+
+function agruparPorCategoria(contas: ContaFixa[]) {
+  const grupos = new Map<string, ContaFixa[]>();
+  for (const c of contas) {
+    const lista = grupos.get(c.categoria) ?? [];
+    lista.push(c);
+    grupos.set(c.categoria, lista);
+  }
+  const ordemConhecida = CATEGORIAS_CONTAS as readonly string[];
+  return [...grupos.entries()].sort((a, b) => {
+    const ia = ordemConhecida.indexOf(a[0]);
+    const ib = ordemConhecida.indexOf(b[0]);
+    if (ia === -1 && ib === -1) return a[0].localeCompare(b[0]);
+    if (ia === -1) return 1;
+    if (ib === -1) return -1;
+    return ia - ib;
+  });
+}
 
 export default function ContasPage() {
   const {
@@ -17,18 +36,25 @@ export default function ContasPage() {
     remover,
     alternarAtiva,
   } = useContasFixas();
+
   const [nome, setNome] = useState("");
   const [valor, setValor] = useState(0);
-  const [categoria, setCategoria] = useState("");
+  const [categoria, setCategoria] = useState<string>(CATEGORIAS_CONTAS[0]);
+  const [categoriaCustom, setCategoriaCustom] = useState("");
+
+  const grupos = useMemo(() => agruparPorCategoria(contas), [contas]);
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     const nomeAparado = nome.trim();
     if (!nomeAparado || !valor) return;
-    const cat = categoria.trim() || "Geral";
+    const cat =
+      categoria === "Outros" && categoriaCustom.trim()
+        ? categoriaCustom.trim()
+        : categoria;
     setNome("");
     setValor(0);
-    setCategoria("");
+    setCategoriaCustom("");
     adicionar(nomeAparado, valor, cat).catch(console.error);
   }
 
@@ -39,36 +65,49 @@ export default function ContasPage() {
 
       <form
         onSubmit={handleSubmit}
-        className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-6"
+        className="rounded-2xl border border-line bg-surface p-4 mb-6 space-y-2"
       >
-        <input
-          placeholder="Nome (ex: Internet)"
-          value={nome}
-          onChange={(e) => setNome(e.target.value)}
-          className="sm:col-span-2 rounded-lg border border-line bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
-        />
-        <input
-          placeholder="Categoria"
-          value={categoria}
-          onChange={(e) => setCategoria(e.target.value)}
-          className="rounded-lg border border-line bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
-        />
-        <div className="flex gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-[9.5rem_1fr_8rem_auto] gap-2">
+          <select
+            value={categoria}
+            onChange={(e) => setCategoria(e.target.value)}
+            className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-brand"
+          >
+            {CATEGORIAS_CONTAS.map((cat) => (
+              <option key={cat} value={cat}>
+                {iconeCategoria(cat)} {cat}
+              </option>
+            ))}
+          </select>
+          <input
+            placeholder="Nome (ex: Internet)"
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+            className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-brand"
+          />
           <MoneyInput
             value={valor}
             onChange={setValor}
-            className="flex-1 rounded-lg border border-line bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+            className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-brand"
           />
           <button
             type="submit"
             className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-[#04120e] hover:bg-brand-dark transition-colors"
           >
-            +
+            Adicionar
           </button>
         </div>
+        {categoria === "Outros" && (
+          <input
+            placeholder="Nome da categoria (opcional)"
+            value={categoriaCustom}
+            onChange={(e) => setCategoriaCustom(e.target.value)}
+            className="w-full rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-brand"
+          />
+        )}
       </form>
 
-      <div className="rounded-2xl border border-line bg-surface p-4 mb-4 flex justify-between items-center">
+      <div className="rounded-2xl border border-line bg-surface p-4 mb-6 flex justify-between items-center">
         <span className="text-sm text-text-muted">Total ativo mensal</span>
         <span className="text-lg font-semibold text-gold">
           {formatarMoeda(total)}
@@ -82,18 +121,65 @@ export default function ContasPage() {
           Nenhuma conta fixa cadastrada.
         </p>
       ) : (
-        <ul className="space-y-2">
-          {contas.map((c) => (
-            <ItemConta
-              key={c.id}
-              conta={c}
+        <div className="space-y-5">
+          {grupos.map(([nomeCategoria, itens]) => (
+            <GrupoCategoria
+              key={nomeCategoria}
+              categoria={nomeCategoria}
+              itens={itens}
               onEditar={editar}
               onRemover={remover}
               onAlternarAtiva={alternarAtiva}
             />
           ))}
-        </ul>
+        </div>
       )}
+    </div>
+  );
+}
+
+function GrupoCategoria({
+  categoria,
+  itens,
+  onEditar,
+  onRemover,
+  onAlternarAtiva,
+}: {
+  categoria: string;
+  itens: ContaFixa[];
+  onEditar: (
+    id: string,
+    dados: { nome: string; valor: number; categoria: string }
+  ) => void;
+  onRemover: (id: string) => void;
+  onAlternarAtiva: (id: string, ativa: boolean) => void;
+}) {
+  const subtotal = itens
+    .filter((c) => c.ativa)
+    .reduce((acc, c) => acc + c.valor, 0);
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2 px-1">
+        <h2 className="text-sm font-medium text-text-muted flex items-center gap-1.5">
+          <span>{iconeCategoria(categoria)}</span>
+          {categoria}
+        </h2>
+        <span className="text-xs text-text-faint">
+          {formatarMoeda(subtotal)}
+        </span>
+      </div>
+      <ul className="space-y-2">
+        {itens.map((c) => (
+          <ItemConta
+            key={c.id}
+            conta={c}
+            onEditar={onEditar}
+            onRemover={onRemover}
+            onAlternarAtiva={onAlternarAtiva}
+          />
+        ))}
+      </ul>
     </div>
   );
 }
@@ -123,7 +209,7 @@ function ItemConta({
     onEditar(conta.id, {
       nome: nomeAparado,
       valor,
-      categoria: categoria.trim() || "Geral",
+      categoria: categoria.trim() || "Outros",
     });
     setEditando(false);
   }
@@ -136,11 +222,21 @@ function ItemConta({
           onChange={(e) => setNome(e.target.value)}
           className="flex-1 rounded-lg border border-line bg-surface-2 px-2 py-1.5 text-sm outline-none focus:border-brand"
         />
-        <input
-          value={categoria}
+        <select
+          value={
+            (CATEGORIAS_CONTAS as readonly string[]).includes(categoria)
+              ? categoria
+              : "Outros"
+          }
           onChange={(e) => setCategoria(e.target.value)}
-          className="w-full sm:w-32 rounded-lg border border-line bg-surface-2 px-2 py-1.5 text-sm outline-none focus:border-brand"
-        />
+          className="w-full sm:w-40 rounded-lg border border-line bg-surface-2 px-2 py-1.5 text-sm outline-none focus:border-brand"
+        >
+          {CATEGORIAS_CONTAS.map((cat) => (
+            <option key={cat} value={cat}>
+              {iconeCategoria(cat)} {cat}
+            </option>
+          ))}
+        </select>
         <MoneyInput
           value={valor}
           onChange={setValor}
@@ -166,23 +262,20 @@ function ItemConta({
 
   return (
     <li
-      className={`flex items-center justify-between rounded-xl border bg-surface px-4 py-3 ${
+      className={`flex items-center justify-between gap-2 rounded-xl border bg-surface px-4 py-3 ${
         conta.ativa ? "border-line" : "border-line-soft opacity-50"
       }`}
     >
-      <div className="flex items-center gap-3">
+      <label className="flex items-center gap-3 min-w-0 cursor-pointer">
         <input
           type="checkbox"
           checked={conta.ativa}
           onChange={(e) => onAlternarAtiva(conta.id, e.target.checked)}
-          className="h-4 w-4 accent-brand"
+          className="h-4 w-4 shrink-0 accent-brand"
         />
-        <div>
-          <p className="text-sm">{conta.nome}</p>
-          <p className="text-xs text-text-faint">{conta.categoria}</p>
-        </div>
-      </div>
-      <div className="flex items-center gap-3">
+        <span className="text-sm truncate">{conta.nome}</span>
+      </label>
+      <div className="flex items-center gap-3 shrink-0">
         <span className="text-sm font-medium text-gold">
           {formatarMoeda(conta.valor)}
         </span>
