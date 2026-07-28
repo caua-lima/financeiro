@@ -12,6 +12,7 @@ const links = [
   { href: "/parcelas", label: "Parcelas", icon: "📅" },
   { href: "/assinaturas", label: "Assinaturas", icon: "🔁" },
   { href: "/cartoes", label: "Cartões", icon: "💳" },
+  { href: "/dre", label: "DRE", icon: "📈" },
 ];
 
 export function Nav() {
@@ -61,12 +62,12 @@ export function Nav() {
         </button>
       </header>
 
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-10 flex border-t border-line bg-surface/95 backdrop-blur pb-[env(safe-area-inset-bottom)]">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-10 flex overflow-x-auto border-t border-line bg-surface/95 backdrop-blur pb-[env(safe-area-inset-bottom)]">
         {links.map((link) => (
           <Link
             key={link.href}
             href={link.href}
-            className={`flex flex-1 flex-col items-center gap-0.5 py-2.5 text-xs transition-colors ${
+            className={`flex w-16 shrink-0 flex-col items-center gap-0.5 py-2.5 text-[11px] transition-colors ${
               pathname === link.href ? "text-brand" : "text-text-faint"
             }`}
           >
