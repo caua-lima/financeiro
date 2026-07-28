@@ -1,7 +1,12 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
-import { formatarMoeda, Parcela, TipoParcela } from "@/lib/types";
+import {
+  formatarMoeda,
+  Parcela,
+  TipoParcela,
+  valorMinhaParte,
+} from "@/lib/types";
 import { useParcelas } from "@/lib/useParcelas";
 import { useCartoes } from "@/lib/useCartoes";
 import { MoneyInput } from "@/components/MoneyInput";
@@ -26,6 +31,7 @@ export default function ParcelasPage() {
   const [pagas, setPagas] = useState("");
   const [tipo, setTipo] = useState<TipoParcela>("cartao");
   const [cartaoId, setCartaoId] = useState("");
+  const [dividida, setDividida] = useState(false);
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -39,13 +45,15 @@ export default function ParcelasPage() {
     setValorParcela(0);
     setTotalParcelas("");
     setPagas("");
+    setDividida(false);
     adicionar(
       nomeAparado,
       valorParcela,
       vTotal,
       vRestantes,
       tipo,
-      tipo === "cartao" ? cartaoId : undefined
+      tipo === "cartao" ? cartaoId : undefined,
+      dividida
     ).catch(console.error);
   }
 
@@ -161,6 +169,16 @@ export default function ParcelasPage() {
           </div>
         )}
 
+        <label className="flex items-center gap-2 text-xs text-text-muted cursor-pointer w-fit">
+          <input
+            type="checkbox"
+            checked={dividida}
+            onChange={(e) => setDividida(e.target.checked)}
+            className="h-4 w-4 accent-brand"
+          />
+          Dividida (você paga só a metade)
+        </label>
+
         <button
           type="submit"
           className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-[#04120e] hover:bg-brand-dark transition-colors"
@@ -238,6 +256,7 @@ function GrupoParcelas({
       parcelasRestantes: number;
       tipo: TipoParcela;
       cartaoId?: string;
+      dividida?: boolean;
     }
   ) => void;
   onRemover: (id: string) => void;
@@ -247,7 +266,7 @@ function GrupoParcelas({
 
   const subtotal = itens
     .filter((p) => p.parcelasRestantes > 0)
-    .reduce((acc, p) => acc + p.valorParcela, 0);
+    .reduce((acc, p) => acc + valorMinhaParte(p), 0);
 
   return (
     <div>
@@ -291,6 +310,7 @@ function ItemParcela({
       parcelasRestantes: number;
       tipo: TipoParcela;
       cartaoId?: string;
+      dividida?: boolean;
     }
   ) => void;
   onRemover: (id: string) => void;
@@ -307,6 +327,7 @@ function ItemParcela({
   );
   const [tipo, setTipo] = useState<TipoParcela>(parcela.tipo ?? "financiamento");
   const [cartaoId, setCartaoId] = useState(parcela.cartaoId ?? "");
+  const [dividida, setDividida] = useState(!!parcela.dividida);
 
   function salvar() {
     const nomeAparado = nome.trim();
@@ -321,6 +342,7 @@ function ItemParcela({
       parcelasRestantes: Math.max(0, vTotal - vPagas),
       tipo,
       cartaoId: tipo === "cartao" ? cartaoId : undefined,
+      dividida,
     });
     setEditando(false);
   }
@@ -393,6 +415,15 @@ function ItemParcela({
             ))}
           </select>
         )}
+        <label className="flex items-center gap-2 text-xs text-text-muted cursor-pointer w-fit">
+          <input
+            type="checkbox"
+            checked={dividida}
+            onChange={(e) => setDividida(e.target.checked)}
+            className="h-4 w-4 accent-brand"
+          />
+          Dividida (você paga só a metade)
+        </label>
         <div className="flex gap-2">
           <button
             onClick={salvar}
@@ -420,10 +451,17 @@ function ItemParcela({
       }`}
     >
       <div className="flex items-center justify-between">
-        <p className="text-sm">{parcela.nome}</p>
+        <div>
+          <p className="text-sm">{parcela.nome}</p>
+          {parcela.dividida && (
+            <p className="text-xs text-text-faint">
+              Total {formatarMoeda(parcela.valorParcela)} · você paga metade
+            </p>
+          )}
+        </div>
         <div className="flex items-center gap-3">
           <span className="text-sm font-medium text-gold">
-            {formatarMoeda(parcela.valorParcela)}
+            {formatarMoeda(valorMinhaParte(parcela))}
           </span>
           <button
             onClick={() => setEditando(true)}

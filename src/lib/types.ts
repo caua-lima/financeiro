@@ -29,8 +29,13 @@ export interface Parcela {
   valorParcela: number;
   totalParcelas: number;
   parcelasRestantes: number;
+  dividida?: boolean; // você paga só metade do valorParcela (ex: dividido com outra pessoa)
   mesReferencia?: string; // mês em que "parcelasRestantes" é válido
   criadoEm: number;
+}
+
+export function valorMinhaParte(parcela: Parcela): number {
+  return parcela.dividida ? parcela.valorParcela / 2 : parcela.valorParcela;
 }
 
 export interface Cartao {

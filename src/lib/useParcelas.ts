@@ -10,7 +10,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { db } from "./firebase";
-import { Parcela, TipoParcela, mesPadrao } from "./types";
+import { Parcela, TipoParcela, mesPadrao, valorMinhaParte } from "./types";
 import { useAuth } from "./AuthContext";
 import { mensagemErro } from "./erroFirebase";
 
@@ -50,7 +50,8 @@ export function useParcelas() {
     totalParcelas: number,
     parcelasRestantes: number,
     tipo: TipoParcela,
-    cartaoId?: string
+    cartaoId?: string,
+    dividida?: boolean
   ) {
     if (!user) return;
     try {
@@ -61,6 +62,7 @@ export function useParcelas() {
         valorParcela,
         totalParcelas,
         parcelasRestantes,
+        dividida: !!dividida,
         mesReferencia: mesPadrao(),
         criadoEm: Date.now(),
       });
@@ -79,6 +81,7 @@ export function useParcelas() {
       parcelasRestantes: number;
       tipo: TipoParcela;
       cartaoId?: string;
+      dividida?: boolean;
     }
   ) {
     if (!user) return;
@@ -86,6 +89,7 @@ export function useParcelas() {
       const { cartaoId, ...resto } = dados;
       await updateDoc(doc(db, "usuarios", user.uid, "parcelas", id), {
         ...resto,
+        dividida: !!dados.dividida,
         cartaoId: dados.tipo === "cartao" && cartaoId ? cartaoId : null,
         mesReferencia: mesPadrao(),
       });
@@ -120,7 +124,7 @@ export function useParcelas() {
   }
 
   const ativas = parcelas.filter((p) => p.parcelasRestantes > 0);
-  const total = ativas.reduce((acc, p) => acc + p.valorParcela, 0);
+  const total = ativas.reduce((acc, p) => acc + valorMinhaParte(p), 0);
 
   return {
     parcelas,

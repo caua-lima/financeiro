@@ -5,6 +5,7 @@ import {
   mesPadrao,
   formatarMoeda,
   parcelasRestantesEm,
+  valorMinhaParte,
   TAXA_IMPOSTO,
 } from "@/lib/types";
 import { useGanhos } from "@/lib/useGanhos";
@@ -23,7 +24,7 @@ export default function DashboardPage() {
     () =>
       parcelas.parcelas.reduce(
         (acc, p) =>
-          parcelasRestantesEm(p, mes) > 0 ? acc + p.valorParcela : acc,
+          parcelasRestantesEm(p, mes) > 0 ? acc + valorMinhaParte(p) : acc,
         0
       ),
     [parcelas.parcelas, mes]
