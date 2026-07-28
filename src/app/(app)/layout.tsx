@@ -28,10 +28,10 @@ export default function AppLayout({
   }
 
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="flex flex-1 flex-col md:flex-row">
       <Nav />
-      <main className="flex-1 px-4 py-6 pb-24 md:pb-6 max-w-3xl w-full mx-auto">
-        {children}
+      <main className="flex-1 min-w-0 px-4 py-6 pb-24 md:px-10 md:py-10 md:pb-10">
+        <div className="max-w-3xl mx-auto">{children}</div>
       </main>
     </div>
   );
