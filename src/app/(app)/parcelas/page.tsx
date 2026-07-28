@@ -481,7 +481,8 @@ function ItemParcela({
       </div>
       <div className="flex items-center justify-between mt-2">
         <p className="text-xs text-text-faint">
-          Faltam {parcela.parcelasRestantes} de {parcela.totalParcelas}
+          Faltam {parcela.parcelasRestantes} de {parcela.totalParcelas} ·{" "}
+          {parcela.totalParcelas - parcela.parcelasRestantes} pagas
         </p>
         {parcela.parcelasRestantes > 0 && (
           <button

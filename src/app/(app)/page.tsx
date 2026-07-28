@@ -11,6 +11,7 @@ import {
 import { useGanhos } from "@/lib/useGanhos";
 import { useContasFixas } from "@/lib/useContasFixas";
 import { useParcelas } from "@/lib/useParcelas";
+import { useAssinaturas } from "@/lib/useAssinaturas";
 import { MonthSelector } from "@/components/MonthSelector";
 import { ErroBanner } from "@/components/ErroBanner";
 
@@ -19,6 +20,7 @@ export default function DashboardPage() {
   const ganhos = useGanhos(mes);
   const contas = useContasFixas();
   const parcelas = useParcelas();
+  const assinaturas = useAssinaturas();
 
   const totalParcelasNoMes = useMemo(
     () =>
@@ -30,9 +32,14 @@ export default function DashboardPage() {
     [parcelas.parcelas, mes]
   );
 
-  const sobra = ganhos.totalLiquido - contas.total - totalParcelasNoMes;
-  const carregando = ganhos.loading || contas.loading || parcelas.loading;
-  const erro = ganhos.erro || contas.erro || parcelas.erro;
+  const sobra =
+    ganhos.totalLiquido -
+    contas.total -
+    totalParcelasNoMes -
+    assinaturas.total;
+  const carregando =
+    ganhos.loading || contas.loading || parcelas.loading || assinaturas.loading;
+  const erro = ganhos.erro || contas.erro || parcelas.erro || assinaturas.erro;
 
   return (
     <div>
@@ -60,7 +67,7 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             <ResumoCard
               label="Ganhos brutos"
               valor={ganhos.total}
@@ -74,6 +81,11 @@ export default function DashboardPage() {
             <ResumoCard
               label="Contas fixas"
               valor={contas.total}
+              cor="text-gold"
+            />
+            <ResumoCard
+              label="Assinaturas"
+              valor={assinaturas.total}
               cor="text-gold"
             />
             <ResumoCard
@@ -98,6 +110,11 @@ export default function DashboardPage() {
               <Linha
                 label="Contas fixas ativas"
                 valor={contas.total}
+                sinal="-"
+              />
+              <Linha
+                label="Assinaturas ativas"
+                valor={assinaturas.total}
                 sinal="-"
               />
               <Linha

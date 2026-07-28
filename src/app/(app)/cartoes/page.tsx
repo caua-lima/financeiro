@@ -4,12 +4,14 @@ import { FormEvent, useState } from "react";
 import { formatarMoeda, Cartao } from "@/lib/types";
 import { useCartoes } from "@/lib/useCartoes";
 import { useParcelas } from "@/lib/useParcelas";
+import { useAssinaturas } from "@/lib/useAssinaturas";
 import { ErroBanner } from "@/components/ErroBanner";
 
 export default function CartoesPage() {
   const { cartoes, loading, erro, adicionar, editar, remover } =
     useCartoes();
   const { parcelas } = useParcelas();
+  const { assinaturas } = useAssinaturas();
   const [nome, setNome] = useState("");
 
   function handleSubmit(e: FormEvent) {
@@ -21,7 +23,7 @@ export default function CartoesPage() {
   }
 
   function faturaDoCartao(cartaoId: string) {
-    return parcelas
+    const totalParcelas = parcelas
       .filter(
         (p) =>
           p.tipo === "cartao" &&
@@ -29,6 +31,10 @@ export default function CartoesPage() {
           p.parcelasRestantes > 0
       )
       .reduce((acc, p) => acc + p.valorParcela, 0);
+    const totalAssinaturas = assinaturas
+      .filter((a) => a.cartaoId === cartaoId && a.ativa)
+      .reduce((acc, a) => acc + a.valor, 0);
+    return totalParcelas + totalAssinaturas;
   }
 
   return (

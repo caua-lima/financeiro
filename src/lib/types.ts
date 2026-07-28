@@ -44,6 +44,15 @@ export interface Cartao {
   criadoEm: number;
 }
 
+export interface Assinatura {
+  id: string;
+  nome: string;
+  valor: number;
+  cartaoId?: string;
+  ativa: boolean;
+  criadoEm: number;
+}
+
 export function mesAtual(): string {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;

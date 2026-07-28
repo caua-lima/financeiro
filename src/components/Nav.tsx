@@ -10,6 +10,7 @@ const links = [
   { href: "/ganhos", label: "Ganhos", icon: "💰" },
   { href: "/contas", label: "Contas", icon: "🧾" },
   { href: "/parcelas", label: "Parcelas", icon: "📅" },
+  { href: "/assinaturas", label: "Assinaturas", icon: "🔁" },
   { href: "/cartoes", label: "Cartões", icon: "💳" },
 ];
 
