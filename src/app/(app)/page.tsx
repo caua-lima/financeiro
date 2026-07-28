@@ -12,6 +12,7 @@ import { useGanhos } from "@/lib/useGanhos";
 import { useContasFixas } from "@/lib/useContasFixas";
 import { useParcelas } from "@/lib/useParcelas";
 import { useAssinaturas } from "@/lib/useAssinaturas";
+import { useGastos } from "@/lib/useGastos";
 import { MonthSelector } from "@/components/MonthSelector";
 import { ErroBanner } from "@/components/ErroBanner";
 
@@ -21,6 +22,7 @@ export default function DashboardPage() {
   const contas = useContasFixas();
   const parcelas = useParcelas();
   const assinaturas = useAssinaturas();
+  const gastosHook = useGastos();
 
   const totalParcelasNoMes = useMemo(
     () =>
@@ -32,14 +34,26 @@ export default function DashboardPage() {
     [parcelas.parcelas, mes]
   );
 
+  const totalGastosNoMes = gastosHook.totalNoMes(mes);
+
   const sobra =
     ganhos.totalLiquido -
     contas.total -
     totalParcelasNoMes -
-    assinaturas.total;
+    assinaturas.total -
+    totalGastosNoMes;
   const carregando =
-    ganhos.loading || contas.loading || parcelas.loading || assinaturas.loading;
-  const erro = ganhos.erro || contas.erro || parcelas.erro || assinaturas.erro;
+    ganhos.loading ||
+    contas.loading ||
+    parcelas.loading ||
+    assinaturas.loading ||
+    gastosHook.loading;
+  const erro =
+    ganhos.erro ||
+    contas.erro ||
+    parcelas.erro ||
+    assinaturas.erro ||
+    gastosHook.erro;
 
   return (
     <div>
@@ -67,7 +81,7 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             <ResumoCard
               label="Ganhos brutos"
               valor={ganhos.total}
@@ -91,6 +105,11 @@ export default function DashboardPage() {
             <ResumoCard
               label="Parcelas"
               valor={totalParcelasNoMes}
+              cor="text-gold"
+            />
+            <ResumoCard
+              label="Gastos avulsos"
+              valor={totalGastosNoMes}
               cor="text-gold"
             />
           </div>
@@ -120,6 +139,11 @@ export default function DashboardPage() {
               <Linha
                 label="Parcelas em andamento"
                 valor={totalParcelasNoMes}
+                sinal="-"
+              />
+              <Linha
+                label="Gastos avulsos do mês"
+                valor={totalGastosNoMes}
                 sinal="-"
               />
               <div className="border-t border-line pt-2 flex justify-between font-semibold">

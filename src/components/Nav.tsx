@@ -11,13 +11,17 @@ import {
   IconParcelas,
   IconAssinaturas,
   IconCartoes,
+  IconGastos,
+  IconSaldo,
   IconDre,
   IconSair,
 } from "./icons";
 
 const links = [
   { href: "/", label: "Resumo", Icon: IconResumo },
+  { href: "/gastos", label: "Gastos", Icon: IconGastos },
   { href: "/ganhos", label: "Ganhos", Icon: IconGanhos },
+  { href: "/saldo", label: "Saldo", Icon: IconSaldo },
   { href: "/contas", label: "Contas", Icon: IconContas },
   { href: "/parcelas", label: "Parcelas", Icon: IconParcelas },
   { href: "/assinaturas", label: "Assinaturas", Icon: IconAssinaturas },
@@ -42,7 +46,7 @@ export function Nav() {
         <div className="px-2 mb-6">
           <Logo />
         </div>
-        <nav className="flex flex-col gap-1">
+        <nav className="flex flex-col gap-1 overflow-y-auto">
           {links.map(({ href, label, Icon }) => {
             const ativo = pathname === href;
             return (

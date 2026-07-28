@@ -53,6 +53,27 @@ export interface Assinatura {
   criadoEm: number;
 }
 
+export interface ContaBancaria {
+  id: string;
+  nome: string;
+  saldoInicial: number;
+  criadoEm: number;
+}
+
+export type FormaPagamento = "cartao" | "pix" | "dinheiro";
+
+export interface Gasto {
+  id: string;
+  descricao: string;
+  valor: number;
+  formaPagamento: FormaPagamento;
+  cartaoId?: string; // quando formaPagamento === "cartao"
+  contaBancariaId?: string; // quando formaPagamento === "pix"
+  textoOriginal?: string; // a frase que originou o registro, pra conferência
+  mes: string;
+  criadoEm: number;
+}
+
 export function mesAtual(): string {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;

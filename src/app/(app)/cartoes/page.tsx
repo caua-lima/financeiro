@@ -1,10 +1,11 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { formatarMoeda, Cartao } from "@/lib/types";
+import { formatarMoeda, mesPadrao, Cartao } from "@/lib/types";
 import { useCartoes } from "@/lib/useCartoes";
 import { useParcelas } from "@/lib/useParcelas";
 import { useAssinaturas } from "@/lib/useAssinaturas";
+import { useGastos } from "@/lib/useGastos";
 import { ErroBanner } from "@/components/ErroBanner";
 
 export default function CartoesPage() {
@@ -12,6 +13,7 @@ export default function CartoesPage() {
     useCartoes();
   const { parcelas } = useParcelas();
   const { assinaturas } = useAssinaturas();
+  const { gastos } = useGastos();
   const [nome, setNome] = useState("");
 
   function handleSubmit(e: FormEvent) {
@@ -34,7 +36,15 @@ export default function CartoesPage() {
     const totalAssinaturas = assinaturas
       .filter((a) => a.cartaoId === cartaoId && a.ativa)
       .reduce((acc, a) => acc + a.valor, 0);
-    return totalParcelas + totalAssinaturas;
+    const totalGastos = gastos
+      .filter(
+        (g) =>
+          g.formaPagamento === "cartao" &&
+          g.cartaoId === cartaoId &&
+          g.mes === mesPadrao()
+      )
+      .reduce((acc, g) => acc + g.valor, 0);
+    return totalParcelas + totalAssinaturas + totalGastos;
   }
 
   return (
