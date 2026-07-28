@@ -50,7 +50,11 @@ export default function ParcelasPage() {
   }
 
   const grupos = useMemo(() => {
-    const financiamentos = parcelas.filter((p) => p.tipo === "financiamento");
+    // parcelas antigas (de antes de existir cartão) não tem "tipo" salvo —
+    // tratamos como financiamento pra não sumirem da lista
+    const financiamentos = parcelas.filter(
+      (p) => p.tipo === "financiamento" || !p.tipo
+    );
     const porCartao = cartoes.map((c) => ({
       cartao: c,
       itens: parcelas.filter(
@@ -301,7 +305,7 @@ function ItemParcela({
   const [pagas, setPagas] = useState(
     String(parcela.totalParcelas - parcela.parcelasRestantes)
   );
-  const [tipo, setTipo] = useState<TipoParcela>(parcela.tipo);
+  const [tipo, setTipo] = useState<TipoParcela>(parcela.tipo ?? "financiamento");
   const [cartaoId, setCartaoId] = useState(parcela.cartaoId ?? "");
 
   function salvar() {

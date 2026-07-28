@@ -10,7 +10,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { db } from "./firebase";
-import { Ganho } from "./types";
+import { Ganho, calcularImposto } from "./types";
 import { useAuth } from "./AuthContext";
 import { mensagemErro } from "./erroFirebase";
 
@@ -123,6 +123,8 @@ export function useGanhos(mes: string) {
     .reduce((acc, g) => acc + g.valor, 0);
   const totalPontuais = pontuais.reduce((acc, g) => acc + g.valor, 0);
   const total = totalRecorrentes + totalPontuais;
+  const imposto = calcularImposto(total);
+  const totalLiquido = total - imposto;
 
   return {
     recorrentes,
@@ -130,6 +132,8 @@ export function useGanhos(mes: string) {
     loading,
     erro,
     total,
+    imposto,
+    totalLiquido,
     adicionarRecorrente,
     adicionarPontual,
     editar,

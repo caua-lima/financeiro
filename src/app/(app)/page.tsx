@@ -1,7 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { mesPadrao, formatarMoeda, parcelasRestantesEm } from "@/lib/types";
+import {
+  mesPadrao,
+  formatarMoeda,
+  parcelasRestantesEm,
+  TAXA_IMPOSTO,
+} from "@/lib/types";
 import { useGanhos } from "@/lib/useGanhos";
 import { useContasFixas } from "@/lib/useContasFixas";
 import { useParcelas } from "@/lib/useParcelas";
@@ -24,7 +29,7 @@ export default function DashboardPage() {
     [parcelas.parcelas, mes]
   );
 
-  const sobra = ganhos.total - contas.total - totalParcelasNoMes;
+  const sobra = ganhos.totalLiquido - contas.total - totalParcelasNoMes;
   const carregando = ganhos.loading || contas.loading || parcelas.loading;
   const erro = ganhos.erro || contas.erro || parcelas.erro;
 
@@ -54,8 +59,17 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
-            <ResumoCard label="Ganhos" valor={ganhos.total} cor="text-positive" />
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <ResumoCard
+              label="Ganhos brutos"
+              valor={ganhos.total}
+              cor="text-positive"
+            />
+            <ResumoCard
+              label={`Imposto (${(TAXA_IMPOSTO * 100).toFixed(0)}%)`}
+              valor={ganhos.imposto}
+              cor="text-negative"
+            />
             <ResumoCard
               label="Contas fixas"
               valor={contas.total}
@@ -73,7 +87,13 @@ export default function DashboardPage() {
               Detalhamento
             </h2>
             <div className="space-y-2 text-sm">
-              <Linha label="Ganhos do mês" valor={ganhos.total} sinal="+" />
+              <Linha label="Ganhos brutos" valor={ganhos.total} sinal="+" />
+              <Linha
+                label={`Imposto (${(TAXA_IMPOSTO * 100).toFixed(0)}%)`}
+                valor={ganhos.imposto}
+                sinal="-"
+                cor="text-negative"
+              />
               <Linha
                 label="Contas fixas ativas"
                 valor={contas.total}
@@ -121,15 +141,18 @@ function Linha({
   label,
   valor,
   sinal,
+  cor,
 }: {
   label: string;
   valor: number;
   sinal: "+" | "-";
+  cor?: string;
 }) {
+  const corPadrao = sinal === "+" ? "text-positive" : "text-gold";
   return (
     <div className="flex justify-between text-text-muted">
       <span>{label}</span>
-      <span className={sinal === "+" ? "text-positive" : "text-gold"}>
+      <span className={cor ?? corPadrao}>
         {sinal} {formatarMoeda(valor)}
       </span>
     </div>

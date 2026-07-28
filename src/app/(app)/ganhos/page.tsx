@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { mesPadrao, formatarMoeda, Ganho } from "@/lib/types";
+import { mesPadrao, formatarMoeda, TAXA_IMPOSTO, Ganho } from "@/lib/types";
 import { useGanhos } from "@/lib/useGanhos";
 import { MonthSelector } from "@/components/MonthSelector";
 import { MoneyInput } from "@/components/MoneyInput";
@@ -17,6 +17,8 @@ export default function GanhosPage() {
     loading,
     erro,
     total,
+    imposto,
+    totalLiquido,
     adicionarRecorrente,
     adicionarPontual,
     editar,
@@ -92,11 +94,27 @@ export default function GanhosPage() {
         </div>
       </form>
 
-      <div className="rounded-2xl border border-line bg-surface p-4 mb-4 flex justify-between items-center">
-        <span className="text-sm text-text-muted">Total do mês</span>
-        <span className="text-lg font-semibold text-positive">
-          {formatarMoeda(total)}
-        </span>
+      <div className="rounded-2xl border border-line bg-surface p-4 mb-6 space-y-2">
+        <div className="flex justify-between items-center">
+          <span className="text-sm text-text-muted">Total bruto</span>
+          <span className="text-base font-medium text-text">
+            {formatarMoeda(total)}
+          </span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-sm text-text-muted">
+            Imposto ({(TAXA_IMPOSTO * 100).toFixed(0)}%)
+          </span>
+          <span className="text-base font-medium text-negative">
+            − {formatarMoeda(imposto)}
+          </span>
+        </div>
+        <div className="flex justify-between items-center border-t border-line pt-2">
+          <span className="text-sm text-text-muted">Total líquido</span>
+          <span className="text-lg font-semibold text-positive">
+            {formatarMoeda(totalLiquido)}
+          </span>
+        </div>
       </div>
 
       {loading ? (

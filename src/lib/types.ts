@@ -59,7 +59,7 @@ export function diferencaMeses(de: string, para: string): number {
 }
 
 export function parcelasRestantesEm(parcela: Parcela, mes: string): number {
-  const referencia = parcela.mesReferencia ?? mesAtual();
+  const referencia = parcela.mesReferencia ?? mesPadrao();
   const decorridos = Math.max(0, diferencaMeses(referencia, mes));
   return Math.max(0, parcela.parcelasRestantes - decorridos);
 }
@@ -75,4 +75,11 @@ export function formatarMes(mes: string): string {
 
 export function formatarMoeda(valor: number): string {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+// Desconto padrão sobre tudo que é emitido (nota/recibo) — salário + comissões.
+export const TAXA_IMPOSTO = 0.06;
+
+export function calcularImposto(valorBruto: number): number {
+  return valorBruto * TAXA_IMPOSTO;
 }
