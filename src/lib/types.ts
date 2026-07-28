@@ -29,6 +29,7 @@ export interface Parcela {
   valorParcela: number;
   totalParcelas: number;
   parcelasRestantes: number;
+  mesReferencia?: string; // mês em que "parcelasRestantes" é válido
   criadoEm: number;
 }
 
@@ -41,6 +42,26 @@ export interface Cartao {
 export function mesAtual(): string {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+
+// Nenhum mês antes deste fica visível no app, mesmo que o mês real seja anterior.
+export const MES_MINIMO = "2026-08";
+
+export function mesPadrao(): string {
+  const atual = mesAtual();
+  return atual > MES_MINIMO ? atual : MES_MINIMO;
+}
+
+export function diferencaMeses(de: string, para: string): number {
+  const [anoDe, mesDe] = de.split("-").map(Number);
+  const [anoPara, mesPara] = para.split("-").map(Number);
+  return (anoPara - anoDe) * 12 + (mesPara - mesDe);
+}
+
+export function parcelasRestantesEm(parcela: Parcela, mes: string): number {
+  const referencia = parcela.mesReferencia ?? mesAtual();
+  const decorridos = Math.max(0, diferencaMeses(referencia, mes));
+  return Math.max(0, parcela.parcelasRestantes - decorridos);
 }
 
 export function formatarMes(mes: string): string {

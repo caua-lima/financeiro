@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { mesAtual, formatarMoeda } from "@/lib/types";
+import { useMemo, useState } from "react";
+import { mesPadrao, formatarMoeda, parcelasRestantesEm } from "@/lib/types";
 import { useGanhos } from "@/lib/useGanhos";
 import { useContasFixas } from "@/lib/useContasFixas";
 import { useParcelas } from "@/lib/useParcelas";
@@ -9,12 +9,22 @@ import { MonthSelector } from "@/components/MonthSelector";
 import { ErroBanner } from "@/components/ErroBanner";
 
 export default function DashboardPage() {
-  const [mes, setMes] = useState(mesAtual());
+  const [mes, setMes] = useState(mesPadrao());
   const ganhos = useGanhos(mes);
   const contas = useContasFixas();
   const parcelas = useParcelas();
 
-  const sobra = ganhos.total - contas.total - parcelas.total;
+  const totalParcelasNoMes = useMemo(
+    () =>
+      parcelas.parcelas.reduce(
+        (acc, p) =>
+          parcelasRestantesEm(p, mes) > 0 ? acc + p.valorParcela : acc,
+        0
+      ),
+    [parcelas.parcelas, mes]
+  );
+
+  const sobra = ganhos.total - contas.total - totalParcelasNoMes;
   const carregando = ganhos.loading || contas.loading || parcelas.loading;
   const erro = ganhos.erro || contas.erro || parcelas.erro;
 
@@ -53,7 +63,7 @@ export default function DashboardPage() {
             />
             <ResumoCard
               label="Parcelas"
-              valor={parcelas.total}
+              valor={totalParcelasNoMes}
               cor="text-gold"
             />
           </div>
@@ -71,7 +81,7 @@ export default function DashboardPage() {
               />
               <Linha
                 label="Parcelas em andamento"
-                valor={parcelas.total}
+                valor={totalParcelasNoMes}
                 sinal="-"
               />
               <div className="border-t border-line pt-2 flex justify-between font-semibold">

@@ -10,7 +10,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { db } from "./firebase";
-import { Parcela, TipoParcela } from "./types";
+import { Parcela, TipoParcela, mesPadrao } from "./types";
 import { useAuth } from "./AuthContext";
 import { mensagemErro } from "./erroFirebase";
 
@@ -61,6 +61,7 @@ export function useParcelas() {
         valorParcela,
         totalParcelas,
         parcelasRestantes,
+        mesReferencia: mesPadrao(),
         criadoEm: Date.now(),
       });
       setErro(null);
@@ -86,6 +87,7 @@ export function useParcelas() {
       await updateDoc(doc(db, "usuarios", user.uid, "parcelas", id), {
         ...resto,
         cartaoId: dados.tipo === "cartao" && cartaoId ? cartaoId : null,
+        mesReferencia: mesPadrao(),
       });
       setErro(null);
     } catch (e) {
@@ -109,6 +111,7 @@ export function useParcelas() {
     try {
       await updateDoc(doc(db, "usuarios", user.uid, "parcelas", id), {
         parcelasRestantes: novoValor,
+        mesReferencia: mesPadrao(),
       });
       setErro(null);
     } catch (e) {

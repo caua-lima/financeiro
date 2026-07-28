@@ -1,6 +1,6 @@
 "use client";
 
-import { formatarMes, mesAtual } from "@/lib/types";
+import { formatarMes, mesPadrao } from "@/lib/types";
 
 function somarMes(mes: string, delta: number): string {
   const [ano, m] = mes.split("-").map(Number);
@@ -15,7 +15,7 @@ export function MonthSelector({
   mes: string;
   onChange: (mes: string) => void;
 }) {
-  const minimo = mesAtual();
+  const minimo = mesPadrao();
   const podeVoltar = mes > minimo;
 
   return (

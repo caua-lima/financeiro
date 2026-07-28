@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { mesAtual, formatarMoeda, Ganho } from "@/lib/types";
+import { mesPadrao, formatarMoeda, Ganho } from "@/lib/types";
 import { useGanhos } from "@/lib/useGanhos";
 import { MonthSelector } from "@/components/MonthSelector";
 import { MoneyInput } from "@/components/MoneyInput";
@@ -10,7 +10,7 @@ import { ErroBanner } from "@/components/ErroBanner";
 type Tipo = "recorrente" | "pontual";
 
 export default function GanhosPage() {
-  const [mes, setMes] = useState(mesAtual());
+  const [mes, setMes] = useState(mesPadrao());
   const {
     recorrentes,
     pontuais,
