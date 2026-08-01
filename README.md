@@ -30,7 +30,19 @@ quanto sobra por mês.
 5. Faça deploy das regras do Firestore (`firestore.rules`) pelo console ou via
    `firebase deploy --only firestore:rules` (precisa do Firebase CLI logado).
 
-6. Rode localmente:
+6. Pra usar a tela **Acesso** (criar/editar/excluir logins), gere uma chave de
+   serviço: Firebase Console > Configurações do projeto > Contas de serviço >
+   Gerar nova chave privada. Isso baixa um `.json` — copie os campos pro
+   `.env.local` (essas variáveis **nunca** levam `NEXT_PUBLIC_`, pois só
+   podem rodar no servidor):
+
+   ```
+   FIREBASE_PROJECT_ID=
+   FIREBASE_CLIENT_EMAIL=
+   FIREBASE_PRIVATE_KEY=
+   ```
+
+7. Rode localmente:
 
    ```
    npm install
@@ -39,5 +51,7 @@ quanto sobra por mês.
 
 ## Deploy na Vercel
 
-Configure as mesmas variáveis de ambiente (`NEXT_PUBLIC_FIREBASE_*`) no
-projeto da Vercel antes do primeiro deploy.
+Configure as mesmas variáveis de ambiente (`NEXT_PUBLIC_FIREBASE_*` e
+`FIREBASE_PROJECT_ID` / `FIREBASE_CLIENT_EMAIL` / `FIREBASE_PRIVATE_KEY`) no
+projeto da Vercel antes do primeiro deploy. Ao colar `FIREBASE_PRIVATE_KEY`,
+mantenha as quebras de linha como `\n` (cole o valor inteiro entre aspas).
