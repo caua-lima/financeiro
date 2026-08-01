@@ -44,13 +44,12 @@ export function useAssinaturas() {
     [todas]
   );
 
-  async function adicionar(nome: string, valor: number, cartaoId?: string) {
+  async function adicionar(nome: string, valor: number) {
     if (!user) return;
     try {
       await addDoc(collection(db, "usuarios", user.uid, "assinaturas"), {
         nome,
         valor,
-        ...(cartaoId ? { cartaoId } : {}),
         ativa: true,
         criadoEm: Date.now(),
       });
@@ -60,16 +59,12 @@ export function useAssinaturas() {
     }
   }
 
-  async function editar(
-    id: string,
-    dados: { nome: string; valor: number; cartaoId?: string }
-  ) {
+  async function editar(id: string, dados: { nome: string; valor: number }) {
     if (!user) return;
     try {
       await updateDoc(doc(db, "usuarios", user.uid, "assinaturas", id), {
         nome: dados.nome,
         valor: dados.valor,
-        cartaoId: dados.cartaoId || null,
       });
       setErro(null);
     } catch (e) {

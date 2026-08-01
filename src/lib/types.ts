@@ -24,7 +24,6 @@ export type TipoParcela = "cartao" | "financiamento";
 export interface Parcela {
   id: string;
   tipo: TipoParcela;
-  cartaoId?: string; // só existe quando tipo === "cartao"
   nome: string;
   valorParcela: number;
   totalParcelas: number;
@@ -38,39 +37,11 @@ export function valorMinhaParte(parcela: Parcela): number {
   return parcela.dividida ? parcela.valorParcela / 2 : parcela.valorParcela;
 }
 
-export interface Cartao {
-  id: string;
-  nome: string;
-  criadoEm: number;
-}
-
 export interface Assinatura {
   id: string;
   nome: string;
   valor: number;
-  cartaoId?: string;
   ativa: boolean;
-  criadoEm: number;
-}
-
-export interface ContaBancaria {
-  id: string;
-  nome: string;
-  saldoInicial: number;
-  criadoEm: number;
-}
-
-export type FormaPagamento = "cartao" | "pix" | "dinheiro";
-
-export interface Gasto {
-  id: string;
-  descricao: string;
-  valor: number;
-  formaPagamento: FormaPagamento;
-  cartaoId?: string; // quando formaPagamento === "cartao"
-  contaBancariaId?: string; // quando formaPagamento === "pix"
-  textoOriginal?: string; // a frase que originou o registro, pra conferência
-  mes: string;
   criadoEm: number;
 }
 

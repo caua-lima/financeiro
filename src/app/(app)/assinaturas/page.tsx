@@ -3,7 +3,6 @@
 import { FormEvent, useState } from "react";
 import { formatarMoeda, Assinatura } from "@/lib/types";
 import { useAssinaturas } from "@/lib/useAssinaturas";
-import { useCartoes } from "@/lib/useCartoes";
 import { MoneyInput } from "@/components/MoneyInput";
 import { ErroBanner } from "@/components/ErroBanner";
 
@@ -18,11 +17,9 @@ export default function AssinaturasPage() {
     remover,
     alternarAtiva,
   } = useAssinaturas();
-  const { cartoes } = useCartoes();
 
   const [nome, setNome] = useState("");
   const [valor, setValor] = useState(0);
-  const [cartaoId, setCartaoId] = useState("");
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -30,8 +27,7 @@ export default function AssinaturasPage() {
     if (!nomeAparado || !valor) return;
     setNome("");
     setValor(0);
-    setCartaoId("");
-    adicionar(nomeAparado, valor, cartaoId || undefined).catch(console.error);
+    adicionar(nomeAparado, valor).catch(console.error);
   }
 
   return (
@@ -41,39 +37,27 @@ export default function AssinaturasPage() {
 
       <form
         onSubmit={handleSubmit}
-        className="rounded-2xl border border-line bg-surface p-4 mb-6 space-y-2"
+        className="rounded-2xl border border-line bg-surface p-4 mb-6 grid grid-cols-1 sm:grid-cols-3 gap-2"
       >
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
-          <input
-            placeholder="Nome (ex: Netflix)"
-            value={nome}
-            onChange={(e) => setNome(e.target.value)}
-            className="sm:col-span-2 rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-brand"
-          />
+        <input
+          placeholder="Nome (ex: Netflix)"
+          value={nome}
+          onChange={(e) => setNome(e.target.value)}
+          className="sm:col-span-2 rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-brand"
+        />
+        <div className="flex gap-2">
           <MoneyInput
             value={valor}
             onChange={setValor}
-            className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-brand"
+            className="flex-1 rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-brand"
           />
-          <select
-            value={cartaoId}
-            onChange={(e) => setCartaoId(e.target.value)}
-            className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-brand"
+          <button
+            type="submit"
+            className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-[#04120e] hover:bg-brand-dark transition-colors"
           >
-            <option value="">Sem cartão</option>
-            {cartoes.map((c) => (
-              <option key={c.id} value={c.id}>
-                💳 {c.nome}
-              </option>
-            ))}
-          </select>
+            +
+          </button>
         </div>
-        <button
-          type="submit"
-          className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-[#04120e] hover:bg-brand-dark transition-colors"
-        >
-          Adicionar
-        </button>
       </form>
 
       <div className="rounded-2xl border border-line bg-surface p-4 mb-6 flex justify-between items-center">
@@ -95,7 +79,6 @@ export default function AssinaturasPage() {
             <ItemAssinatura
               key={a.id}
               assinatura={a}
-              cartoes={cartoes}
               onEditar={editar}
               onRemover={remover}
               onAlternarAtiva={alternarAtiva}
@@ -109,35 +92,23 @@ export default function AssinaturasPage() {
 
 function ItemAssinatura({
   assinatura,
-  cartoes,
   onEditar,
   onRemover,
   onAlternarAtiva,
 }: {
   assinatura: Assinatura;
-  cartoes: { id: string; nome: string }[];
-  onEditar: (
-    id: string,
-    dados: { nome: string; valor: number; cartaoId?: string }
-  ) => void;
+  onEditar: (id: string, dados: { nome: string; valor: number }) => void;
   onRemover: (id: string) => void;
   onAlternarAtiva: (id: string, ativa: boolean) => void;
 }) {
   const [editando, setEditando] = useState(false);
   const [nome, setNome] = useState(assinatura.nome);
   const [valor, setValor] = useState(assinatura.valor);
-  const [cartaoId, setCartaoId] = useState(assinatura.cartaoId ?? "");
-
-  const nomeCartao = cartoes.find((c) => c.id === assinatura.cartaoId)?.nome;
 
   function salvar() {
     const nomeAparado = nome.trim();
     if (!nomeAparado || !valor) return;
-    onEditar(assinatura.id, {
-      nome: nomeAparado,
-      valor,
-      cartaoId: cartaoId || undefined,
-    });
+    onEditar(assinatura.id, { nome: nomeAparado, valor });
     setEditando(false);
   }
 
@@ -154,18 +125,6 @@ function ItemAssinatura({
           onChange={setValor}
           className="w-full sm:w-32 rounded-lg border border-line bg-surface-2 px-2 py-1.5 text-sm outline-none focus:border-brand"
         />
-        <select
-          value={cartaoId}
-          onChange={(e) => setCartaoId(e.target.value)}
-          className="w-full sm:w-40 rounded-lg border border-line bg-surface-2 px-2 py-1.5 text-sm outline-none focus:border-brand"
-        >
-          <option value="">Sem cartão</option>
-          {cartoes.map((c) => (
-            <option key={c.id} value={c.id}>
-              💳 {c.nome}
-            </option>
-          ))}
-        </select>
         <div className="flex gap-2 shrink-0">
           <button
             onClick={salvar}
@@ -197,12 +156,7 @@ function ItemAssinatura({
           onChange={(e) => onAlternarAtiva(assinatura.id, e.target.checked)}
           className="h-4 w-4 shrink-0 accent-brand"
         />
-        <div className="min-w-0">
-          <p className="text-sm truncate">{assinatura.nome}</p>
-          {nomeCartao && (
-            <p className="text-xs text-text-faint">💳 {nomeCartao}</p>
-          )}
-        </div>
+        <span className="text-sm truncate">{assinatura.nome}</span>
       </label>
       <div className="flex items-center gap-3 shrink-0">
         <span className="text-sm font-medium text-gold">

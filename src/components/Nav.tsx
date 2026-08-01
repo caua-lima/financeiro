@@ -10,23 +10,19 @@ import {
   IconContas,
   IconParcelas,
   IconAssinaturas,
-  IconCartoes,
-  IconGastos,
-  IconSaldo,
   IconDre,
+  IconAcesso,
   IconSair,
 } from "./icons";
 
 const links = [
   { href: "/", label: "Resumo", Icon: IconResumo },
-  { href: "/gastos", label: "Gastos", Icon: IconGastos },
   { href: "/ganhos", label: "Ganhos", Icon: IconGanhos },
-  { href: "/saldo", label: "Saldo", Icon: IconSaldo },
   { href: "/contas", label: "Contas", Icon: IconContas },
   { href: "/parcelas", label: "Parcelas", Icon: IconParcelas },
   { href: "/assinaturas", label: "Assinaturas", Icon: IconAssinaturas },
-  { href: "/cartoes", label: "Cartões", Icon: IconCartoes },
   { href: "/dre", label: "DRE", Icon: IconDre },
+  { href: "/acesso", label: "Acesso", Icon: IconAcesso },
 ];
 
 export function Nav() {

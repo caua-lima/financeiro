@@ -11,16 +11,12 @@ import {
   ContaFixa,
   Assinatura,
   Parcela,
-  Gasto,
 } from "@/lib/types";
 import { iconeCategoria, CATEGORIAS_CONTAS } from "@/lib/categorias";
 import { useGanhos } from "@/lib/useGanhos";
 import { useContasFixas } from "@/lib/useContasFixas";
 import { useAssinaturas } from "@/lib/useAssinaturas";
 import { useParcelas } from "@/lib/useParcelas";
-import { useCartoes } from "@/lib/useCartoes";
-import { useGastos } from "@/lib/useGastos";
-import { useContasBancarias } from "@/lib/useContasBancarias";
 import { MonthSelector } from "@/components/MonthSelector";
 import { ErroBanner } from "@/components/ErroBanner";
 
@@ -41,28 +37,10 @@ export default function DrePage() {
   const contas = useContasFixas();
   const assinaturas = useAssinaturas();
   const parcelas = useParcelas();
-  const { cartoes } = useCartoes();
-  const gastosHook = useGastos();
-  const { contas: contasBancarias } = useContasBancarias();
 
   const loading =
-    ganhos.loading ||
-    contas.loading ||
-    assinaturas.loading ||
-    parcelas.loading ||
-    gastosHook.loading;
-  const erro =
-    ganhos.erro ||
-    contas.erro ||
-    assinaturas.erro ||
-    parcelas.erro ||
-    gastosHook.erro;
-
-  const nomeCartao = useMemo(
-    () => (id?: string) =>
-      cartoes.find((c) => c.id === id)?.nome ?? "Sem cartão",
-    [cartoes]
-  );
+    ganhos.loading || contas.loading || assinaturas.loading || parcelas.loading;
+  const erro = ganhos.erro || contas.erro || assinaturas.erro || parcelas.erro;
 
   const contasPorCategoria = useMemo(() => {
     const grupos = agruparPorChave(contas.contas, (c) => c.categoria);
@@ -77,11 +55,6 @@ export default function DrePage() {
     });
   }, [contas.contas]);
 
-  const assinaturasPorCartao = useMemo(
-    () => agruparPorChave(assinaturas.assinaturas, (a) => nomeCartao(a.cartaoId)),
-    [assinaturas.assinaturas, nomeCartao]
-  );
-
   const parcelasDoMes = useMemo(
     () => parcelas.parcelas.filter((p) => parcelasRestantesEm(p, mes) > 0),
     [parcelas.parcelas, mes]
@@ -90,34 +63,9 @@ export default function DrePage() {
   const parcelasPorGrupo = useMemo(
     () =>
       agruparPorChave(parcelasDoMes, (p) =>
-        p.tipo === "cartao" ? nomeCartao(p.cartaoId) : "Financiamento"
+        p.tipo === "financiamento" ? "Financiamento" : "Cartão de crédito"
       ),
-    [parcelasDoMes, nomeCartao]
-  );
-
-  const gastosDoMes = useMemo(
-    () => gastosHook.gastos.filter((g) => g.mes === mes),
-    [gastosHook.gastos, mes]
-  );
-
-  const nomeConta = useMemo(
-    () => (id?: string) =>
-      contasBancarias.find((c) => c.id === id)?.nome ?? "sem conta",
-    [contasBancarias]
-  );
-
-  const rotuloGasto = useMemo(
-    () => (g: Gasto) => {
-      if (g.formaPagamento === "cartao") return `💳 ${nomeCartao(g.cartaoId)}`;
-      if (g.formaPagamento === "pix") return `Pix · ${nomeConta(g.contaBancariaId)}`;
-      return "Dinheiro";
-    },
-    [nomeCartao, nomeConta]
-  );
-
-  const gastosPorGrupo = useMemo(
-    () => agruparPorChave(gastosDoMes, rotuloGasto),
-    [gastosDoMes, rotuloGasto]
+    [parcelasDoMes]
   );
 
   const totalContas = contas.total;
@@ -126,35 +74,8 @@ export default function DrePage() {
     (acc, p) => acc + valorMinhaParte(p),
     0
   );
-  const totalGastos = gastosDoMes.reduce((acc, g) => acc + g.valor, 0);
-  const totalDespesas =
-    totalContas + totalAssinaturas + totalParcelas + totalGastos;
+  const totalDespesas = totalContas + totalAssinaturas + totalParcelas;
   const resultado = ganhos.totalLiquido - totalDespesas;
-
-  const faturaPorCartao = cartoes.map((c) => {
-    const assinaturasAtivas = assinaturas.assinaturas.filter(
-      (a) => a.cartaoId === c.id && a.ativa
-    );
-    const parcelasCartao = parcelasDoMes.filter(
-      (p) => p.tipo === "cartao" && p.cartaoId === c.id
-    );
-    const gastosCartao = gastosDoMes.filter(
-      (g) => g.formaPagamento === "cartao" && g.cartaoId === c.id
-    );
-    const totalAssin = assinaturasAtivas.reduce((acc, a) => acc + a.valor, 0);
-    const totalParc = parcelasCartao.reduce(
-      (acc, p) => acc + p.valorParcela,
-      0
-    );
-    const totalGast = gastosCartao.reduce((acc, g) => acc + g.valor, 0);
-    return {
-      cartao: c,
-      totalAssin,
-      totalParc,
-      totalGast,
-      total: totalAssin + totalParc + totalGast,
-    };
-  });
 
   return (
     <div>
@@ -187,7 +108,7 @@ export default function DrePage() {
           </div>
 
           {/* RECEITAS */}
-          <Secao titulo="📈 Receitas" total={ganhos.total} corTotal="text-positive">
+          <Secao titulo="Receitas" total={ganhos.total} corTotal="text-positive">
             <SubGrupo titulo="Recorrentes">
               {ganhos.recorrentes.length === 0 ? (
                 <Vazio />
@@ -233,7 +154,7 @@ export default function DrePage() {
           </Secao>
 
           {/* CONTAS FIXAS */}
-          <Secao titulo="🧾 Contas fixas" total={totalContas} corTotal="text-gold">
+          <Secao titulo="Contas fixas" total={totalContas} corTotal="text-gold">
             {contasPorCategoria.map(([categoria, itens]) => (
               <SubGrupo
                 key={categoria}
@@ -257,43 +178,33 @@ export default function DrePage() {
           </Secao>
 
           {/* ASSINATURAS */}
-          <Secao
-            titulo="🔁 Assinaturas"
-            total={totalAssinaturas}
-            corTotal="text-gold"
-          >
-            {[...assinaturasPorCartao.entries()].map(([grupo, itens]) => (
-              <SubGrupo
-                key={grupo}
-                titulo={grupo === "Sem cartão" ? grupo : `💳 ${grupo}`}
-                subtotal={itens
-                  .filter((a) => a.ativa)
-                  .reduce((acc, a) => acc + a.valor, 0)}
-              >
-                {itens.map((a: Assinatura) => (
-                  <ItemLinha
-                    key={a.id}
-                    nome={a.nome}
-                    valor={a.valor}
-                    cor="text-gold"
-                    inativo={!a.ativa}
-                    nota={!a.ativa ? "desativada" : undefined}
-                  />
-                ))}
-              </SubGrupo>
-            ))}
+          <Secao titulo="Assinaturas" total={totalAssinaturas} corTotal="text-gold">
+            {assinaturas.assinaturas.length === 0 ? (
+              <Vazio />
+            ) : (
+              assinaturas.assinaturas.map((a: Assinatura) => (
+                <ItemLinha
+                  key={a.id}
+                  nome={a.nome}
+                  valor={a.valor}
+                  cor="text-gold"
+                  inativo={!a.ativa}
+                  nota={!a.ativa ? "desativada" : undefined}
+                />
+              ))
+            )}
           </Secao>
 
           {/* PARCELAS E FINANCIAMENTOS */}
           <Secao
-            titulo="📅 Parcelas e financiamentos"
+            titulo="Parcelas e financiamentos"
             total={totalParcelas}
             corTotal="text-gold"
           >
             {[...parcelasPorGrupo.entries()].map(([grupo, itens]) => (
               <SubGrupo
                 key={grupo}
-                titulo={grupo === "Financiamento" ? `🏦 ${grupo}` : `💳 ${grupo}`}
+                titulo={grupo}
                 subtotal={itens.reduce((acc, p) => acc + valorMinhaParte(p), 0)}
               >
                 {itens.map((p: Parcela) => (
@@ -313,65 +224,6 @@ export default function DrePage() {
             ))}
           </Secao>
 
-          {/* GASTOS AVULSOS */}
-          <Secao
-            titulo="📝 Gastos avulsos"
-            total={totalGastos}
-            corTotal="text-gold"
-          >
-            {gastosDoMes.length === 0 ? (
-              <Vazio />
-            ) : (
-              [...gastosPorGrupo.entries()].map(([grupo, itens]) => (
-                <SubGrupo
-                  key={grupo}
-                  titulo={grupo}
-                  subtotal={itens.reduce((acc, g) => acc + g.valor, 0)}
-                >
-                  {itens.map((g: Gasto) => (
-                    <ItemLinha
-                      key={g.id}
-                      nome={g.descricao}
-                      valor={g.valor}
-                      cor="text-gold"
-                    />
-                  ))}
-                </SubGrupo>
-              ))
-            )}
-          </Secao>
-
-          {/* FATURA POR CARTÃO */}
-          {cartoes.length > 0 && (
-            <div className="rounded-2xl border border-line bg-surface p-4">
-              <h2 className="text-sm font-medium text-text-muted mb-3">
-                💳 Fatura por cartão (valor cheio, sem dividir)
-              </h2>
-              <div className="space-y-2 text-sm">
-                {faturaPorCartao.map(
-                  ({ cartao, totalAssin, totalParc, totalGast, total }) => (
-                    <div
-                      key={cartao.id}
-                      className="flex justify-between items-center border-b border-line-soft pb-2 last:border-0 last:pb-0"
-                    >
-                      <div>
-                        <p className="text-text">{cartao.nome}</p>
-                        <p className="text-xs text-text-faint">
-                          Assinaturas {formatarMoeda(totalAssin)} · Parcelas{" "}
-                          {formatarMoeda(totalParc)} · Gastos{" "}
-                          {formatarMoeda(totalGast)}
-                        </p>
-                      </div>
-                      <span className="font-medium text-gold">
-                        {formatarMoeda(total)}
-                      </span>
-                    </div>
-                  )
-                )}
-              </div>
-            </div>
-          )}
-
           {/* RESUMO FINAL */}
           <div className="rounded-2xl border border-line bg-surface p-4">
             <h2 className="text-sm font-medium text-text-muted mb-3">
@@ -382,7 +234,6 @@ export default function DrePage() {
               <LinhaResumo label="Contas fixas" valor={totalContas} sinal="-" />
               <LinhaResumo label="Assinaturas" valor={totalAssinaturas} sinal="-" />
               <LinhaResumo label="Parcelas e financiamentos" valor={totalParcelas} sinal="-" />
-              <LinhaResumo label="Gastos avulsos" valor={totalGastos} sinal="-" />
               <div className="border-t border-line pt-2 flex justify-between font-semibold">
                 <span>Resultado do mês</span>
                 <span className={resultado >= 0 ? "text-positive" : "text-negative"}>

@@ -79,16 +79,6 @@ export function IconAssinaturas(props: IconProps) {
   );
 }
 
-export function IconCartoes(props: IconProps) {
-  return base(
-    <>
-      <rect width="20" height="14" x="2" y="5" rx="2" />
-      <line x1="2" x2="22" y1="10" y2="10" />
-    </>,
-    props
-  );
-}
-
 export function IconDre(props: IconProps) {
   return base(
     <>
@@ -102,41 +92,11 @@ export function IconDre(props: IconProps) {
   );
 }
 
-export function IconGastos(props: IconProps) {
+export function IconAcesso(props: IconProps) {
   return base(
     <>
-      <line x1="8" x2="21" y1="6" y2="6" />
-      <line x1="8" x2="21" y1="12" y2="12" />
-      <line x1="8" x2="21" y1="18" y2="18" />
-      <line x1="3" x2="3.01" y1="6" y2="6" />
-      <line x1="3" x2="3.01" y1="12" y2="12" />
-      <line x1="3" x2="3.01" y1="18" y2="18" />
-    </>,
-    props
-  );
-}
-
-export function IconSaldo(props: IconProps) {
-  return base(
-    <>
-      <line x1="3" x2="21" y1="22" y2="22" />
-      <line x1="6" x2="6" y1="18" y2="11" />
-      <line x1="10" x2="10" y1="18" y2="11" />
-      <line x1="14" x2="14" y1="18" y2="11" />
-      <line x1="18" x2="18" y1="18" y2="11" />
-      <polygon points="12 2 20 7 4 7" />
-    </>,
-    props
-  );
-}
-
-export function IconMic(props: IconProps) {
-  return base(
-    <>
-      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3Z" />
-      <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-      <line x1="12" x2="12" y1="19" y2="23" />
-      <line x1="8" x2="16" y1="23" y2="23" />
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21c0-4 3.5-7 8-7s8 3 8 7" />
     </>,
     props
   );

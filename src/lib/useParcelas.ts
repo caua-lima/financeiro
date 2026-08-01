@@ -50,14 +50,12 @@ export function useParcelas() {
     totalParcelas: number,
     parcelasRestantes: number,
     tipo: TipoParcela,
-    cartaoId?: string,
     dividida?: boolean
   ) {
     if (!user) return;
     try {
       await addDoc(collection(db, "usuarios", user.uid, "parcelas"), {
         tipo,
-        ...(tipo === "cartao" && cartaoId ? { cartaoId } : {}),
         nome,
         valorParcela,
         totalParcelas,
@@ -80,17 +78,14 @@ export function useParcelas() {
       totalParcelas: number;
       parcelasRestantes: number;
       tipo: TipoParcela;
-      cartaoId?: string;
       dividida?: boolean;
     }
   ) {
     if (!user) return;
     try {
-      const { cartaoId, ...resto } = dados;
       await updateDoc(doc(db, "usuarios", user.uid, "parcelas", id), {
-        ...resto,
+        ...dados,
         dividida: !!dados.dividida,
-        cartaoId: dados.tipo === "cartao" && cartaoId ? cartaoId : null,
         mesReferencia: mesPadrao(),
       });
       setErro(null);

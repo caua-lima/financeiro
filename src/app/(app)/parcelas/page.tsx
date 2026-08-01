@@ -8,7 +8,6 @@ import {
   valorMinhaParte,
 } from "@/lib/types";
 import { useParcelas } from "@/lib/useParcelas";
-import { useCartoes } from "@/lib/useCartoes";
 import { MoneyInput } from "@/components/MoneyInput";
 import { ErroBanner } from "@/components/ErroBanner";
 
@@ -23,14 +22,12 @@ export default function ParcelasPage() {
     remover,
     darBaixa,
   } = useParcelas();
-  const { cartoes } = useCartoes();
 
   const [nome, setNome] = useState("");
   const [valorParcela, setValorParcela] = useState(0);
   const [totalParcelas, setTotalParcelas] = useState("");
   const [pagas, setPagas] = useState("");
   const [tipo, setTipo] = useState<TipoParcela>("cartao");
-  const [cartaoId, setCartaoId] = useState("");
   const [dividida, setDividida] = useState(false);
 
   function handleSubmit(e: FormEvent) {
@@ -38,7 +35,6 @@ export default function ParcelasPage() {
     const nomeAparado = nome.trim();
     const vTotal = parseInt(totalParcelas, 10);
     if (!nomeAparado || !valorParcela || !vTotal) return;
-    if (tipo === "cartao" && !cartaoId) return;
     const vPagas = pagas ? Math.min(parseInt(pagas, 10), vTotal) : 0;
     const vRestantes = Math.max(0, vTotal - vPagas);
     setNome("");
@@ -46,36 +42,16 @@ export default function ParcelasPage() {
     setTotalParcelas("");
     setPagas("");
     setDividida(false);
-    adicionar(
-      nomeAparado,
-      valorParcela,
-      vTotal,
-      vRestantes,
-      tipo,
-      tipo === "cartao" ? cartaoId : undefined,
-      dividida
-    ).catch(console.error);
+    adicionar(nomeAparado, valorParcela, vTotal, vRestantes, tipo, dividida).catch(
+      console.error
+    );
   }
 
   const grupos = useMemo(() => {
-    // parcelas antigas (de antes de existir cartão) não tem "tipo" salvo —
-    // tratamos como financiamento pra não sumirem da lista
-    const financiamentos = parcelas.filter(
-      (p) => p.tipo === "financiamento" || !p.tipo
-    );
-    const porCartao = cartoes.map((c) => ({
-      cartao: c,
-      itens: parcelas.filter(
-        (p) => p.tipo === "cartao" && p.cartaoId === c.id
-      ),
-    }));
-    const semCartao = parcelas.filter(
-      (p) =>
-        p.tipo === "cartao" &&
-        (!p.cartaoId || !cartoes.some((c) => c.id === p.cartaoId))
-    );
-    return { financiamentos, porCartao, semCartao };
-  }, [parcelas, cartoes]);
+    const cartao = parcelas.filter((p) => p.tipo === "cartao" || !p.tipo);
+    const financiamento = parcelas.filter((p) => p.tipo === "financiamento");
+    return { cartao, financiamento };
+  }, [parcelas]);
 
   return (
     <div>
@@ -96,7 +72,7 @@ export default function ParcelasPage() {
                 : "border-line text-text-faint"
             }`}
           >
-            💳 Cartão de crédito
+            Cartão de crédito
           </button>
           <button
             type="button"
@@ -107,7 +83,7 @@ export default function ParcelasPage() {
                 : "border-line text-text-faint"
             }`}
           >
-            🏦 Financiamento
+            Financiamento
           </button>
         </div>
 
@@ -142,33 +118,6 @@ export default function ParcelasPage() {
           />
         </div>
 
-        {tipo === "cartao" && (
-          <div>
-            {cartoes.length === 0 ? (
-              <p className="text-xs text-text-faint">
-                Você ainda não cadastrou nenhum cartão. Vá em{" "}
-                <a href="/cartoes" className="text-brand hover:text-brand-dark">
-                  Cartões
-                </a>{" "}
-                pra cadastrar um antes.
-              </p>
-            ) : (
-              <select
-                value={cartaoId}
-                onChange={(e) => setCartaoId(e.target.value)}
-                className="w-full sm:w-64 rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-brand"
-              >
-                <option value="">Qual cartão?</option>
-                {cartoes.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    💳 {c.nome}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
-        )}
-
         <label className="flex items-center gap-2 text-xs text-text-muted cursor-pointer w-fit">
           <input
             type="checkbox"
@@ -201,31 +150,15 @@ export default function ParcelasPage() {
       ) : (
         <div className="space-y-5">
           <GrupoParcelas
-            titulo="🏦 Financiamentos"
-            itens={grupos.financiamentos}
-            cartoes={cartoes}
+            titulo="Cartão de crédito"
+            itens={grupos.cartao}
             onEditar={editar}
             onRemover={remover}
             onDarBaixa={darBaixa}
           />
-          {grupos.porCartao.map(
-            ({ cartao, itens }) =>
-              itens.length > 0 && (
-                <GrupoParcelas
-                  key={cartao.id}
-                  titulo={`💳 ${cartao.nome}`}
-                  itens={itens}
-                  cartoes={cartoes}
-                  onEditar={editar}
-                  onRemover={remover}
-                  onDarBaixa={darBaixa}
-                />
-              )
-          )}
           <GrupoParcelas
-            titulo="💳 Cartão removido"
-            itens={grupos.semCartao}
-            cartoes={cartoes}
+            titulo="Financiamento"
+            itens={grupos.financiamento}
             onEditar={editar}
             onRemover={remover}
             onDarBaixa={darBaixa}
@@ -239,14 +172,12 @@ export default function ParcelasPage() {
 function GrupoParcelas({
   titulo,
   itens,
-  cartoes,
   onEditar,
   onRemover,
   onDarBaixa,
 }: {
   titulo: string;
   itens: Parcela[];
-  cartoes: { id: string; nome: string }[];
   onEditar: (
     id: string,
     dados: {
@@ -255,7 +186,6 @@ function GrupoParcelas({
       totalParcelas: number;
       parcelasRestantes: number;
       tipo: TipoParcela;
-      cartaoId?: string;
       dividida?: boolean;
     }
   ) => void;
@@ -281,7 +211,6 @@ function GrupoParcelas({
           <ItemParcela
             key={p.id}
             parcela={p}
-            cartoes={cartoes}
             onEditar={onEditar}
             onRemover={onRemover}
             onDarBaixa={onDarBaixa}
@@ -294,13 +223,11 @@ function GrupoParcelas({
 
 function ItemParcela({
   parcela,
-  cartoes,
   onEditar,
   onRemover,
   onDarBaixa,
 }: {
   parcela: Parcela;
-  cartoes: { id: string; nome: string }[];
   onEditar: (
     id: string,
     dados: {
@@ -309,7 +236,6 @@ function ItemParcela({
       totalParcelas: number;
       parcelasRestantes: number;
       tipo: TipoParcela;
-      cartaoId?: string;
       dividida?: boolean;
     }
   ) => void;
@@ -325,15 +251,13 @@ function ItemParcela({
   const [pagas, setPagas] = useState(
     String(parcela.totalParcelas - parcela.parcelasRestantes)
   );
-  const [tipo, setTipo] = useState<TipoParcela>(parcela.tipo ?? "financiamento");
-  const [cartaoId, setCartaoId] = useState(parcela.cartaoId ?? "");
+  const [tipo, setTipo] = useState<TipoParcela>(parcela.tipo ?? "cartao");
   const [dividida, setDividida] = useState(!!parcela.dividida);
 
   function salvar() {
     const nomeAparado = nome.trim();
     const vTotal = parseInt(totalParcelas, 10);
     if (!nomeAparado || !valorParcela || !vTotal) return;
-    if (tipo === "cartao" && !cartaoId) return;
     const vPagas = pagas ? Math.min(parseInt(pagas, 10), vTotal) : 0;
     onEditar(parcela.id, {
       nome: nomeAparado,
@@ -341,7 +265,6 @@ function ItemParcela({
       totalParcelas: vTotal,
       parcelasRestantes: Math.max(0, vTotal - vPagas),
       tipo,
-      cartaoId: tipo === "cartao" ? cartaoId : undefined,
       dividida,
     });
     setEditando(false);
@@ -360,7 +283,7 @@ function ItemParcela({
                 : "border-line text-text-faint"
             }`}
           >
-            💳 Cartão
+            Cartão
           </button>
           <button
             type="button"
@@ -371,7 +294,7 @@ function ItemParcela({
                 : "border-line text-text-faint"
             }`}
           >
-            🏦 Financiamento
+            Financiamento
           </button>
         </div>
         <input
@@ -401,20 +324,6 @@ function ItemParcela({
             className="rounded-lg border border-line bg-surface-2 px-2 py-1.5 text-sm outline-none focus:border-brand"
           />
         </div>
-        {tipo === "cartao" && (
-          <select
-            value={cartaoId}
-            onChange={(e) => setCartaoId(e.target.value)}
-            className="w-full sm:w-64 rounded-lg border border-line bg-surface-2 px-2 py-1.5 text-sm outline-none focus:border-brand"
-          >
-            <option value="">Qual cartão?</option>
-            {cartoes.map((c) => (
-              <option key={c.id} value={c.id}>
-                💳 {c.nome}
-              </option>
-            ))}
-          </select>
-        )}
         <label className="flex items-center gap-2 text-xs text-text-muted cursor-pointer w-fit">
           <input
             type="checkbox"
