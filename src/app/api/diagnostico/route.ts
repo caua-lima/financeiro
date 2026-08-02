@@ -5,8 +5,8 @@ export const dynamic = "force-dynamic";
 
 /**
  * Rota temporária de diagnóstico: diz se as variáveis de ambiente do
- * Firebase Admin chegaram no servidor e se o SDK consegue inicializar.
- * Não expõe nenhum valor secreto — só o formato do que chegou.
+ * Firebase chegaram no servidor e se a autenticação com o Google
+ * funciona. Não expõe nenhum valor secreto.
  */
 export async function GET() {
   const etapas: Record<string, unknown> = {};
@@ -20,19 +20,18 @@ export async function GET() {
       tamanhoPrivateKey: chavePrivada.length,
       comecaCorreto: chavePrivada.startsWith("-----BEGIN PRIVATE KEY-----"),
       comecaComAspas: chavePrivada.startsWith('"'),
-      temBarraNLiteral: chavePrivada.includes("\\n"),
-      temQuebraDeLinhaReal: chavePrivada.includes("\n"),
     };
 
-    const { getAdminAuth } = await import("@/lib/firebaseAdmin");
+    const { accessToken } = await import("@/lib/googleAuth");
     etapas.importOk = true;
 
-    const auth = getAdminAuth();
-    etapas.initOk = true;
+    const token = await accessToken();
+    etapas.accessTokenOk = !!token;
 
-    const lista = await auth.listUsers(1);
-    etapas.listUsersOk = true;
-    etapas.totalNaPrimeiraPagina = lista.users.length;
+    const { listarUsuarios } = await import("@/lib/usuariosFirebase");
+    const usuarios = await listarUsuarios();
+    etapas.listarUsuariosOk = true;
+    etapas.totalUsuarios = usuarios.length;
 
     return NextResponse.json({ ok: true, etapas });
   } catch (e) {

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminAuth } from "@/lib/firebaseAdmin";
+import { atualizarUsuario, excluirUsuario } from "@/lib/usuariosFirebase";
 import { verificarChamador } from "@/lib/verificarChamador";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 function mensagemDeErro(e: unknown, padrao: string): string {
   if (e instanceof Error) return e.message;
@@ -22,11 +23,7 @@ export async function PATCH(
     const { uid } = await params;
     const { email, senha, disabled } = await req.json();
 
-    await getAdminAuth().updateUser(uid, {
-      ...(email ? { email } : {}),
-      ...(senha ? { password: senha } : {}),
-      ...(typeof disabled === "boolean" ? { disabled } : {}),
-    });
+    await atualizarUsuario(uid, { email, senha, disabled });
     return NextResponse.json({ ok: true });
   } catch (e) {
     return NextResponse.json(
@@ -47,7 +44,7 @@ export async function DELETE(
     }
 
     const { uid } = await params;
-    await getAdminAuth().deleteUser(uid);
+    await excluirUsuario(uid);
     return NextResponse.json({ ok: true });
   } catch (e) {
     return NextResponse.json(

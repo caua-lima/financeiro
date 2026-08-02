@@ -1,12 +1,14 @@
 import { NextRequest } from "next/server";
-import { getAdminAuth } from "./firebaseAdmin";
+import { verificarIdToken, TokenVerificado } from "./googleAuth";
 
-export async function verificarChamador(req: NextRequest) {
+export async function verificarChamador(
+  req: NextRequest
+): Promise<TokenVerificado | null> {
   const cabecalho = req.headers.get("authorization") ?? "";
   const token = cabecalho.startsWith("Bearer ") ? cabecalho.slice(7) : null;
   if (!token) return null;
   try {
-    return await getAdminAuth().verifyIdToken(token);
+    return await verificarIdToken(token);
   } catch {
     return null;
   }

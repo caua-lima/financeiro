@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminAuth } from "@/lib/firebaseAdmin";
+import { listarUsuarios, criarUsuario } from "@/lib/usuariosFirebase";
 import { verificarChamador } from "@/lib/verificarChamador";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 function mensagemDeErro(e: unknown, padrao: string): string {
   if (e instanceof Error) return e.message;
@@ -16,15 +17,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ erro: "Não autenticado." }, { status: 401 });
     }
 
-    const lista = await getAdminAuth().listUsers();
-    const usuarios = lista.users.map((u) => ({
-      uid: u.uid,
-      email: u.email,
-      disabled: u.disabled,
-      criadoEm: u.metadata.creationTime,
-      ultimoLogin: u.metadata.lastSignInTime,
-    }));
-
+    const usuarios = await listarUsuarios();
     return NextResponse.json({ usuarios });
   } catch (e) {
     return NextResponse.json(
@@ -49,8 +42,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const usuario = await getAdminAuth().createUser({ email, password: senha });
-    return NextResponse.json({ uid: usuario.uid });
+    const uid = await criarUsuario(email, senha);
+    return NextResponse.json({ uid });
   } catch (e) {
     return NextResponse.json(
       { erro: mensagemDeErro(e, "Erro ao criar usuário.") },
