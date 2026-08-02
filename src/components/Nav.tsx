@@ -10,6 +10,7 @@ import {
   IconContas,
   IconParcelas,
   IconAssinaturas,
+  IconChecklist,
   IconDre,
   IconAcesso,
   IconSair,
@@ -17,6 +18,7 @@ import {
 
 const links = [
   { href: "/", label: "Resumo", Icon: IconResumo },
+  { href: "/checklist", label: "Checklist", Icon: IconChecklist },
   { href: "/ganhos", label: "Ganhos", Icon: IconGanhos },
   { href: "/contas", label: "Contas", Icon: IconContas },
   { href: "/parcelas", label: "Parcelas", Icon: IconParcelas },

@@ -92,6 +92,18 @@ export function IconDre(props: IconProps) {
   );
 }
 
+export function IconChecklist(props: IconProps) {
+  return base(
+    <>
+      <path d="m3 7 2 2 4-4" />
+      <path d="m3 15 2 2 4-4" />
+      <line x1="13" x2="21" y1="7" y2="7" />
+      <line x1="13" x2="21" y1="15" y2="15" />
+    </>,
+    props
+  );
+}
+
 export function IconAcesso(props: IconProps) {
   return base(
     <>
