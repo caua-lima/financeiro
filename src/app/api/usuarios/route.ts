@@ -8,16 +8,22 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ erro: "Não autenticado." }, { status: 401 });
   }
 
-  const lista = await getAdminAuth().listUsers();
-  const usuarios = lista.users.map((u) => ({
-    uid: u.uid,
-    email: u.email,
-    disabled: u.disabled,
-    criadoEm: u.metadata.creationTime,
-    ultimoLogin: u.metadata.lastSignInTime,
-  }));
+  try {
+    const lista = await getAdminAuth().listUsers();
+    const usuarios = lista.users.map((u) => ({
+      uid: u.uid,
+      email: u.email,
+      disabled: u.disabled,
+      criadoEm: u.metadata.creationTime,
+      ultimoLogin: u.metadata.lastSignInTime,
+    }));
 
-  return NextResponse.json({ usuarios });
+    return NextResponse.json({ usuarios });
+  } catch (e) {
+    const mensagem =
+      e instanceof Error ? e.message : "Erro ao listar usuários.";
+    return NextResponse.json({ erro: mensagem }, { status: 500 });
+  }
 }
 
 export async function POST(req: NextRequest) {
