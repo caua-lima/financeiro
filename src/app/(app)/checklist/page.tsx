@@ -83,12 +83,23 @@ export default function ChecklistPage() {
 
     const itensFaturas: ItemChecklist[] = faturas.faturas
       .filter((f) => f.valor > 0)
-      .map((f) => ({
-        id: f.id,
-        origem: "fatura" as const,
-        nome: f.nome,
-        valor: f.valor,
-      }));
+      .map((f) => {
+        const vinculadas = parcelas.parcelas.filter(
+          (p) => p.tipo === "cartao" && p.cartao === f.nome
+        );
+        return {
+          id: f.id,
+          origem: "fatura" as const,
+          nome: f.nome,
+          detalhe:
+            vinculadas.length > 0
+              ? `dá baixa em ${vinculadas.length} parcela${
+                  vinculadas.length > 1 ? "s" : ""
+                } desse cartão`
+              : undefined,
+          valor: f.valor,
+        };
+      });
 
     return [
       { titulo: "Contas fixas", itens: itensContas },
@@ -103,6 +114,26 @@ export default function ChecklistPage() {
     faturas.faturas,
     mes,
   ]);
+
+  function alternarPago(item: ItemChecklist, marcado: boolean) {
+    pagamentos.marcar(item.origem, item.id, marcado, {
+      nome: item.nome,
+      valor: item.valor,
+    });
+
+    if (item.origem === "fatura") {
+      const vinculadas = parcelas.parcelas.filter(
+        (p) => p.tipo === "cartao" && p.cartao === item.nome
+      );
+      for (const p of vinculadas) {
+        if (marcado && p.parcelasRestantes > 0) {
+          parcelas.darBaixa(p.id);
+        } else if (!marcado && p.parcelasRestantes < p.totalParcelas) {
+          parcelas.reverterBaixa(p.id);
+        }
+      }
+    }
+  }
 
   const todosItens = grupos.flatMap((g) => g.itens);
   const totalGeral = todosItens.reduce((acc, i) => acc + i.valor, 0);
@@ -217,12 +248,7 @@ export default function ChecklistPage() {
                                 type="checkbox"
                                 checked={pago}
                                 onChange={(e) =>
-                                  pagamentos.marcar(
-                                    item.origem,
-                                    item.id,
-                                    e.target.checked,
-                                    { nome: item.nome, valor: item.valor }
-                                  )
+                                  alternarPago(item, e.target.checked)
                                 }
                                 className="h-5 w-5 shrink-0 accent-brand"
                               />

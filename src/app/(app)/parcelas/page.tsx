@@ -3,11 +3,15 @@
 import { FormEvent, useMemo, useState } from "react";
 import {
   formatarMoeda,
+  mesPadrao,
+  parcelasRestantesEm,
   Parcela,
   TipoParcela,
   valorMinhaParte,
 } from "@/lib/types";
+import { CARTOES_PREDEFINIDOS } from "@/lib/cartoes";
 import { useParcelas } from "@/lib/useParcelas";
+import { MonthSelector } from "@/components/MonthSelector";
 import { MoneyInput } from "@/components/MoneyInput";
 import { ErroBanner } from "@/components/ErroBanner";
 
@@ -23,11 +27,13 @@ export default function ParcelasPage() {
     darBaixa,
   } = useParcelas();
 
+  const [mes, setMes] = useState(mesPadrao());
   const [nome, setNome] = useState("");
   const [valorParcela, setValorParcela] = useState(0);
   const [totalParcelas, setTotalParcelas] = useState("");
   const [pagas, setPagas] = useState("");
   const [tipo, setTipo] = useState<TipoParcela>("cartao");
+  const [cartao, setCartao] = useState("");
   const [dividida, setDividida] = useState(false);
   const [naFatura, setNaFatura] = useState(false);
 
@@ -51,7 +57,8 @@ export default function ParcelasPage() {
       vRestantes,
       tipo,
       dividida,
-      naFatura
+      naFatura,
+      cartao || undefined
     ).catch(console.error);
   }
 
@@ -126,6 +133,21 @@ export default function ParcelasPage() {
           />
         </div>
 
+        {tipo === "cartao" && (
+          <select
+            value={cartao}
+            onChange={(e) => setCartao(e.target.value)}
+            className="w-full sm:w-64 rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-brand"
+          >
+            <option value="">Qual cartão?</option>
+            {CARTOES_PREDEFINIDOS.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        )}
+
         <label className="flex items-center gap-2 text-xs text-text-muted cursor-pointer w-fit">
           <input
             type="checkbox"
@@ -156,12 +178,17 @@ export default function ParcelasPage() {
         </button>
       </form>
 
-      <div className="rounded-2xl border border-line bg-surface p-4 mb-6 flex justify-between items-center">
+      <div className="rounded-2xl border border-line bg-surface p-4 mb-4 flex justify-between items-center">
         <span className="text-sm text-text-muted">Total mensal em parcelas</span>
         <span className="text-lg font-semibold text-gold">
           {formatarMoeda(total)}
         </span>
       </div>
+
+      <p className="text-xs text-text-faint mb-1 px-1">
+        Navegue pelo mês pra ver o vencimento de cada parcela
+      </p>
+      <MonthSelector mes={mes} onChange={setMes} />
 
       {loading ? (
         <p className="text-sm text-text-faint">Carregando...</p>
@@ -172,6 +199,7 @@ export default function ParcelasPage() {
           <GrupoParcelas
             titulo="Cartão de crédito"
             itens={grupos.cartao}
+            mes={mes}
             onEditar={editar}
             onRemover={remover}
             onDarBaixa={darBaixa}
@@ -179,6 +207,7 @@ export default function ParcelasPage() {
           <GrupoParcelas
             titulo="Financiamento"
             itens={grupos.financiamento}
+            mes={mes}
             onEditar={editar}
             onRemover={remover}
             onDarBaixa={darBaixa}
@@ -189,29 +218,31 @@ export default function ParcelasPage() {
   );
 }
 
+interface DadosEdicaoParcela {
+  nome: string;
+  valorParcela: number;
+  totalParcelas: number;
+  parcelasRestantes: number;
+  tipo: TipoParcela;
+  dividida?: boolean;
+  naFatura?: boolean;
+  cartao?: string;
+}
+
 function GrupoParcelas({
   titulo,
   itens,
+  mes,
   onEditar,
   onRemover,
   onDarBaixa,
 }: {
   titulo: string;
   itens: Parcela[];
-  onEditar: (
-    id: string,
-    dados: {
-      nome: string;
-      valorParcela: number;
-      totalParcelas: number;
-      parcelasRestantes: number;
-      tipo: TipoParcela;
-      dividida?: boolean;
-      naFatura?: boolean;
-    }
-  ) => void;
+  mes: string;
+  onEditar: (id: string, dados: DadosEdicaoParcela) => void;
   onRemover: (id: string) => void;
-  onDarBaixa: (id: string, parcelasRestantes: number) => void;
+  onDarBaixa: (id: string) => void;
 }) {
   if (itens.length === 0) return null;
 
@@ -232,6 +263,7 @@ function GrupoParcelas({
           <ItemParcela
             key={p.id}
             parcela={p}
+            mes={mes}
             onEditar={onEditar}
             onRemover={onRemover}
             onDarBaixa={onDarBaixa}
@@ -244,25 +276,16 @@ function GrupoParcelas({
 
 function ItemParcela({
   parcela,
+  mes,
   onEditar,
   onRemover,
   onDarBaixa,
 }: {
   parcela: Parcela;
-  onEditar: (
-    id: string,
-    dados: {
-      nome: string;
-      valorParcela: number;
-      totalParcelas: number;
-      parcelasRestantes: number;
-      tipo: TipoParcela;
-      dividida?: boolean;
-      naFatura?: boolean;
-    }
-  ) => void;
+  mes: string;
+  onEditar: (id: string, dados: DadosEdicaoParcela) => void;
   onRemover: (id: string) => void;
-  onDarBaixa: (id: string, parcelasRestantes: number) => void;
+  onDarBaixa: (id: string) => void;
 }) {
   const [editando, setEditando] = useState(false);
   const [nome, setNome] = useState(parcela.nome);
@@ -274,8 +297,12 @@ function ItemParcela({
     String(parcela.totalParcelas - parcela.parcelasRestantes)
   );
   const [tipo, setTipo] = useState<TipoParcela>(parcela.tipo ?? "cartao");
+  const [cartao, setCartao] = useState(parcela.cartao ?? "");
   const [dividida, setDividida] = useState(!!parcela.dividida);
   const [naFatura, setNaFatura] = useState(!!parcela.naFatura);
+
+  const restantesNoMes = parcelasRestantesEm(parcela, mes);
+  const numeroNoMes = parcela.totalParcelas - restantesNoMes + 1;
 
   function salvar() {
     const nomeAparado = nome.trim();
@@ -290,6 +317,7 @@ function ItemParcela({
       tipo,
       dividida,
       naFatura,
+      cartao: cartao || undefined,
     });
     setEditando(false);
   }
@@ -348,6 +376,20 @@ function ItemParcela({
             className="rounded-lg border border-line bg-surface-2 px-2 py-1.5 text-sm outline-none focus:border-brand"
           />
         </div>
+        {tipo === "cartao" && (
+          <select
+            value={cartao}
+            onChange={(e) => setCartao(e.target.value)}
+            className="w-full rounded-lg border border-line bg-surface-2 px-2 py-1.5 text-sm outline-none focus:border-brand"
+          >
+            <option value="">Qual cartão?</option>
+            {CARTOES_PREDEFINIDOS.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        )}
         <label className="flex items-center gap-2 text-xs text-text-muted cursor-pointer w-fit">
           <input
             type="checkbox"
@@ -397,14 +439,16 @@ function ItemParcela({
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm">{parcela.nome}</p>
-          {parcela.dividida && (
-            <p className="text-xs text-text-faint">
-              Total {formatarMoeda(parcela.valorParcela)} · você paga metade
-            </p>
-          )}
-          {parcela.naFatura && (
-            <p className="text-xs text-text-faint">já na fatura do cartão</p>
-          )}
+          <div className="flex flex-wrap gap-x-2 text-xs text-text-faint">
+            {parcela.cartao && <span>💳 {parcela.cartao}</span>}
+            {parcela.dividida && (
+              <span>
+                total {formatarMoeda(parcela.valorParcela)} · você paga
+                metade
+              </span>
+            )}
+            {parcela.naFatura && <span>já na fatura do cartão</span>}
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <span
@@ -437,13 +481,18 @@ function ItemParcela({
         </p>
         {parcela.parcelasRestantes > 0 && (
           <button
-            onClick={() => onDarBaixa(parcela.id, parcela.parcelasRestantes)}
+            onClick={() => onDarBaixa(parcela.id)}
             className="text-xs text-brand hover:text-brand-dark"
           >
             Dar baixa neste mês
           </button>
         )}
       </div>
+      <p className="text-xs text-info mt-1">
+        {restantesNoMes > 0
+          ? `neste mês: parcela ${numeroNoMes} de ${parcela.totalParcelas}`
+          : "neste mês: já quitada"}
+      </p>
     </li>
   );
 }

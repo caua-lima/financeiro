@@ -51,7 +51,8 @@ export function useParcelas() {
     parcelasRestantes: number,
     tipo: TipoParcela,
     dividida?: boolean,
-    naFatura?: boolean
+    naFatura?: boolean,
+    cartao?: string
   ) {
     if (!user) return;
     try {
@@ -63,6 +64,7 @@ export function useParcelas() {
         parcelasRestantes,
         dividida: !!dividida,
         naFatura: tipo === "cartao" ? !!naFatura : false,
+        ...(tipo === "cartao" && cartao ? { cartao } : {}),
         mesReferencia: mesPadrao(),
         criadoEm: Date.now(),
       });
@@ -82,14 +84,17 @@ export function useParcelas() {
       tipo: TipoParcela;
       dividida?: boolean;
       naFatura?: boolean;
+      cartao?: string;
     }
   ) {
     if (!user) return;
     try {
+      const { cartao, ...resto } = dados;
       await updateDoc(doc(db, "usuarios", user.uid, "parcelas", id), {
-        ...dados,
+        ...resto,
         dividida: !!dados.dividida,
         naFatura: dados.tipo === "cartao" ? !!dados.naFatura : false,
+        cartao: dados.tipo === "cartao" && cartao ? cartao : null,
         mesReferencia: mesPadrao(),
       });
       setErro(null);
@@ -108,9 +113,27 @@ export function useParcelas() {
     }
   }
 
-  async function darBaixa(id: string, parcelasRestantes: number) {
+  async function darBaixa(id: string) {
     if (!user) return;
-    const novoValor = Math.max(0, parcelasRestantes - 1);
+    const p = parcelas.find((x) => x.id === id);
+    if (!p) return;
+    const novoValor = Math.max(0, p.parcelasRestantes - 1);
+    try {
+      await updateDoc(doc(db, "usuarios", user.uid, "parcelas", id), {
+        parcelasRestantes: novoValor,
+        mesReferencia: mesPadrao(),
+      });
+      setErro(null);
+    } catch (e) {
+      setErro(mensagemErro(e));
+    }
+  }
+
+  async function reverterBaixa(id: string) {
+    if (!user) return;
+    const p = parcelas.find((x) => x.id === id);
+    if (!p) return;
+    const novoValor = Math.min(p.totalParcelas, p.parcelasRestantes + 1);
     try {
       await updateDoc(doc(db, "usuarios", user.uid, "parcelas", id), {
         parcelasRestantes: novoValor,
@@ -137,5 +160,6 @@ export function useParcelas() {
     editar,
     remover,
     darBaixa,
+    reverterBaixa,
   };
 }

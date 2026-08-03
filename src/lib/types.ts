@@ -29,6 +29,7 @@ export interface Parcela {
   totalParcelas: number;
   parcelasRestantes: number;
   dividida?: boolean; // você paga só metade do valorParcela (ex: dividido com outra pessoa)
+  cartao?: string; // qual dos CARTOES_PREDEFINIDOS ela é cobrada (só quando tipo === "cartao")
   naFatura?: boolean; // já contabilizada dentro do valor lançado em "Fatura do cartão" — não soma de novo
   mesReferencia?: string; // mês em que "parcelasRestantes" é válido
   criadoEm: number;
