@@ -83,7 +83,7 @@ export default function DrePage() {
   const totalContas = contas.total;
   const totalAssinaturas = assinaturas.total;
   const totalParcelas = parcelasDoMes.reduce(
-    (acc, p) => acc + valorMinhaParte(p),
+    (acc, p) => (p.naFatura ? acc : acc + valorMinhaParte(p)),
     0
   );
   const totalFaturas = faturas.total;
@@ -202,8 +202,14 @@ export default function DrePage() {
                   nome={a.nome}
                   valor={a.valor}
                   cor="text-gold"
-                  inativo={!a.ativa}
-                  nota={!a.ativa ? "desativada" : undefined}
+                  inativo={!a.ativa || a.naFatura}
+                  nota={
+                    !a.ativa
+                      ? "desativada"
+                      : a.naFatura
+                      ? "já contada na fatura do cartão"
+                      : undefined
+                  }
                 />
               ))
             )}
@@ -219,7 +225,10 @@ export default function DrePage() {
               <SubGrupo
                 key={grupo}
                 titulo={grupo}
-                subtotal={itens.reduce((acc, p) => acc + valorMinhaParte(p), 0)}
+                subtotal={itens.reduce(
+                  (acc, p) => (p.naFatura ? acc : acc + valorMinhaParte(p)),
+                  0
+                )}
               >
                 {itens.map((p: Parcela) => (
                   <ItemLinha
@@ -227,8 +236,11 @@ export default function DrePage() {
                     nome={p.nome}
                     valor={valorMinhaParte(p)}
                     cor="text-gold"
+                    inativo={p.naFatura}
                     nota={
-                      p.dividida
+                      p.naFatura
+                        ? `já contada na fatura do cartão · faltam ${p.parcelasRestantes}`
+                        : p.dividida
                         ? `dividida · total ${formatarMoeda(p.valorParcela)} · faltam ${p.parcelasRestantes}`
                         : `faltam ${p.parcelasRestantes} de ${p.totalParcelas}`
                     }

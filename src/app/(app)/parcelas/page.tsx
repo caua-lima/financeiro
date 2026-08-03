@@ -29,6 +29,7 @@ export default function ParcelasPage() {
   const [pagas, setPagas] = useState("");
   const [tipo, setTipo] = useState<TipoParcela>("cartao");
   const [dividida, setDividida] = useState(false);
+  const [naFatura, setNaFatura] = useState(false);
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -42,9 +43,16 @@ export default function ParcelasPage() {
     setTotalParcelas("");
     setPagas("");
     setDividida(false);
-    adicionar(nomeAparado, valorParcela, vTotal, vRestantes, tipo, dividida).catch(
-      console.error
-    );
+    setNaFatura(false);
+    adicionar(
+      nomeAparado,
+      valorParcela,
+      vTotal,
+      vRestantes,
+      tipo,
+      dividida,
+      naFatura
+    ).catch(console.error);
   }
 
   const grupos = useMemo(() => {
@@ -128,6 +136,18 @@ export default function ParcelasPage() {
           Dividida (você paga só a metade)
         </label>
 
+        {tipo === "cartao" && (
+          <label className="flex items-center gap-2 text-xs text-text-muted cursor-pointer w-fit">
+            <input
+              type="checkbox"
+              checked={naFatura}
+              onChange={(e) => setNaFatura(e.target.checked)}
+              className="h-4 w-4 accent-brand"
+            />
+            Já está na fatura do cartão (não contar de novo no total)
+          </label>
+        )}
+
         <button
           type="submit"
           className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-[#0E0F0C] hover:bg-brand-dark transition-colors"
@@ -187,6 +207,7 @@ function GrupoParcelas({
       parcelasRestantes: number;
       tipo: TipoParcela;
       dividida?: boolean;
+      naFatura?: boolean;
     }
   ) => void;
   onRemover: (id: string) => void;
@@ -195,7 +216,7 @@ function GrupoParcelas({
   if (itens.length === 0) return null;
 
   const subtotal = itens
-    .filter((p) => p.parcelasRestantes > 0)
+    .filter((p) => p.parcelasRestantes > 0 && !p.naFatura)
     .reduce((acc, p) => acc + valorMinhaParte(p), 0);
 
   return (
@@ -237,6 +258,7 @@ function ItemParcela({
       parcelasRestantes: number;
       tipo: TipoParcela;
       dividida?: boolean;
+      naFatura?: boolean;
     }
   ) => void;
   onRemover: (id: string) => void;
@@ -253,6 +275,7 @@ function ItemParcela({
   );
   const [tipo, setTipo] = useState<TipoParcela>(parcela.tipo ?? "cartao");
   const [dividida, setDividida] = useState(!!parcela.dividida);
+  const [naFatura, setNaFatura] = useState(!!parcela.naFatura);
 
   function salvar() {
     const nomeAparado = nome.trim();
@@ -266,6 +289,7 @@ function ItemParcela({
       parcelasRestantes: Math.max(0, vTotal - vPagas),
       tipo,
       dividida,
+      naFatura,
     });
     setEditando(false);
   }
@@ -333,6 +357,17 @@ function ItemParcela({
           />
           Dividida (você paga só a metade)
         </label>
+        {tipo === "cartao" && (
+          <label className="flex items-center gap-2 text-xs text-text-muted cursor-pointer w-fit">
+            <input
+              type="checkbox"
+              checked={naFatura}
+              onChange={(e) => setNaFatura(e.target.checked)}
+              className="h-4 w-4 accent-brand"
+            />
+            Já está na fatura do cartão (não contar de novo no total)
+          </label>
+        )}
         <div className="flex gap-2">
           <button
             onClick={salvar}
@@ -367,9 +402,16 @@ function ItemParcela({
               Total {formatarMoeda(parcela.valorParcela)} · você paga metade
             </p>
           )}
+          {parcela.naFatura && (
+            <p className="text-xs text-text-faint">já na fatura do cartão</p>
+          )}
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-sm font-medium text-gold">
+          <span
+            className={`text-sm font-medium ${
+              parcela.naFatura ? "text-text-faint" : "text-gold"
+            }`}
+          >
             {formatarMoeda(valorMinhaParte(parcela))}
           </span>
           <button

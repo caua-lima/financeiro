@@ -44,13 +44,14 @@ export function useAssinaturas() {
     [todas]
   );
 
-  async function adicionar(nome: string, valor: number) {
+  async function adicionar(nome: string, valor: number, naFatura?: boolean) {
     if (!user) return;
     try {
       await addDoc(collection(db, "usuarios", user.uid, "assinaturas"), {
         nome,
         valor,
         ativa: true,
+        naFatura: !!naFatura,
         criadoEm: Date.now(),
       });
       setErro(null);
@@ -59,12 +60,16 @@ export function useAssinaturas() {
     }
   }
 
-  async function editar(id: string, dados: { nome: string; valor: number }) {
+  async function editar(
+    id: string,
+    dados: { nome: string; valor: number; naFatura?: boolean }
+  ) {
     if (!user) return;
     try {
       await updateDoc(doc(db, "usuarios", user.uid, "assinaturas", id), {
         nome: dados.nome,
         valor: dados.valor,
+        naFatura: !!dados.naFatura,
       });
       setErro(null);
     } catch (e) {
@@ -95,7 +100,7 @@ export function useAssinaturas() {
   }
 
   const total = assinaturas
-    .filter((a) => a.ativa)
+    .filter((a) => a.ativa && !a.naFatura)
     .reduce((acc, a) => acc + a.valor, 0);
 
   return {

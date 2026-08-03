@@ -57,7 +57,7 @@ export default function ChecklistPage() {
       }));
 
     const itensAssinaturas: ItemChecklist[] = assinaturas.assinaturas
-      .filter((a) => a.ativa)
+      .filter((a) => a.ativa && !a.naFatura)
       .map((a) => ({
         id: a.id,
         origem: "assinatura" as const,
@@ -66,7 +66,7 @@ export default function ChecklistPage() {
       }));
 
     const itensParcelas: ItemChecklist[] = parcelas.parcelas
-      .filter((p) => parcelasRestantesEm(p, mes) > 0)
+      .filter((p) => parcelasRestantesEm(p, mes) > 0 && !p.naFatura)
       .map((p) => {
         const restantes = parcelasRestantesEm(p, mes);
         const numeroAtual = p.totalParcelas - restantes + 1;

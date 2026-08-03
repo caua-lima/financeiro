@@ -50,7 +50,8 @@ export function useParcelas() {
     totalParcelas: number,
     parcelasRestantes: number,
     tipo: TipoParcela,
-    dividida?: boolean
+    dividida?: boolean,
+    naFatura?: boolean
   ) {
     if (!user) return;
     try {
@@ -61,6 +62,7 @@ export function useParcelas() {
         totalParcelas,
         parcelasRestantes,
         dividida: !!dividida,
+        naFatura: tipo === "cartao" ? !!naFatura : false,
         mesReferencia: mesPadrao(),
         criadoEm: Date.now(),
       });
@@ -79,6 +81,7 @@ export function useParcelas() {
       parcelasRestantes: number;
       tipo: TipoParcela;
       dividida?: boolean;
+      naFatura?: boolean;
     }
   ) {
     if (!user) return;
@@ -86,6 +89,7 @@ export function useParcelas() {
       await updateDoc(doc(db, "usuarios", user.uid, "parcelas", id), {
         ...dados,
         dividida: !!dados.dividida,
+        naFatura: dados.tipo === "cartao" ? !!dados.naFatura : false,
         mesReferencia: mesPadrao(),
       });
       setErro(null);
@@ -119,7 +123,9 @@ export function useParcelas() {
   }
 
   const ativas = parcelas.filter((p) => p.parcelasRestantes > 0);
-  const total = ativas.reduce((acc, p) => acc + valorMinhaParte(p), 0);
+  const total = ativas
+    .filter((p) => !p.naFatura)
+    .reduce((acc, p) => acc + valorMinhaParte(p), 0);
 
   return {
     parcelas,

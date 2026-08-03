@@ -28,7 +28,9 @@ export default function DashboardPage() {
     () =>
       parcelas.parcelas.reduce(
         (acc, p) =>
-          parcelasRestantesEm(p, mes) > 0 ? acc + valorMinhaParte(p) : acc,
+          parcelasRestantesEm(p, mes) > 0 && !p.naFatura
+            ? acc + valorMinhaParte(p)
+            : acc,
         0
       ),
     [parcelas.parcelas, mes]

@@ -29,6 +29,7 @@ export interface Parcela {
   totalParcelas: number;
   parcelasRestantes: number;
   dividida?: boolean; // você paga só metade do valorParcela (ex: dividido com outra pessoa)
+  naFatura?: boolean; // já contabilizada dentro do valor lançado em "Fatura do cartão" — não soma de novo
   mesReferencia?: string; // mês em que "parcelasRestantes" é válido
   criadoEm: number;
 }
@@ -42,6 +43,7 @@ export interface Assinatura {
   nome: string;
   valor: number;
   ativa: boolean;
+  naFatura?: boolean; // já contabilizada dentro do valor lançado em "Fatura do cartão" — não soma de novo
   criadoEm: number;
 }
 
