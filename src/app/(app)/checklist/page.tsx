@@ -81,12 +81,14 @@ export default function ChecklistPage() {
         };
       });
 
-    const itensFaturas: ItemChecklist[] = faturas.faturas.map((f) => ({
-      id: f.id,
-      origem: "fatura" as const,
-      nome: f.nome,
-      valor: f.valor,
-    }));
+    const itensFaturas: ItemChecklist[] = faturas.faturas
+      .filter((f) => f.valor > 0)
+      .map((f) => ({
+        id: f.id,
+        origem: "fatura" as const,
+        nome: f.nome,
+        valor: f.valor,
+      }));
 
     return [
       { titulo: "Contas fixas", itens: itensContas },

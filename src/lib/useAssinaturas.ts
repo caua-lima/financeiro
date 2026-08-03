@@ -44,13 +44,19 @@ export function useAssinaturas() {
     [todas]
   );
 
-  async function adicionar(nome: string, valor: number, naFatura?: boolean) {
+  async function adicionar(
+    nome: string,
+    valor: number,
+    cartao?: string,
+    naFatura?: boolean
+  ) {
     if (!user) return;
     try {
       await addDoc(collection(db, "usuarios", user.uid, "assinaturas"), {
         nome,
         valor,
         ativa: true,
+        ...(cartao ? { cartao } : {}),
         naFatura: !!naFatura,
         criadoEm: Date.now(),
       });
@@ -62,13 +68,19 @@ export function useAssinaturas() {
 
   async function editar(
     id: string,
-    dados: { nome: string; valor: number; naFatura?: boolean }
+    dados: {
+      nome: string;
+      valor: number;
+      cartao?: string;
+      naFatura?: boolean;
+    }
   ) {
     if (!user) return;
     try {
       await updateDoc(doc(db, "usuarios", user.uid, "assinaturas", id), {
         nome: dados.nome,
         valor: dados.valor,
+        cartao: dados.cartao || null,
         naFatura: !!dados.naFatura,
       });
       setErro(null);

@@ -1,10 +1,25 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { formatarMoeda, Assinatura } from "@/lib/types";
+import { CARTOES_PREDEFINIDOS } from "@/lib/cartoes";
 import { useAssinaturas } from "@/lib/useAssinaturas";
 import { MoneyInput } from "@/components/MoneyInput";
 import { ErroBanner } from "@/components/ErroBanner";
+
+function agruparPorCartao(assinaturas: Assinatura[]) {
+  const grupos = new Map<string, Assinatura[]>();
+  for (const a of assinaturas) {
+    const chave = a.cartao ?? "Sem cartão";
+    const lista = grupos.get(chave) ?? [];
+    lista.push(a);
+    grupos.set(chave, lista);
+  }
+  const ordem = [...CARTOES_PREDEFINIDOS, "Sem cartão"];
+  return [...grupos.entries()].sort(
+    (a, b) => ordem.indexOf(a[0]) - ordem.indexOf(b[0])
+  );
+}
 
 export default function AssinaturasPage() {
   const {
@@ -20,7 +35,10 @@ export default function AssinaturasPage() {
 
   const [nome, setNome] = useState("");
   const [valor, setValor] = useState(0);
+  const [cartao, setCartao] = useState("");
   const [naFatura, setNaFatura] = useState(false);
+
+  const grupos = useMemo(() => agruparPorCartao(assinaturas), [assinaturas]);
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -29,7 +47,9 @@ export default function AssinaturasPage() {
     setNome("");
     setValor(0);
     setNaFatura(false);
-    adicionar(nomeAparado, valor, naFatura).catch(console.error);
+    adicionar(nomeAparado, valor, cartao || undefined, naFatura).catch(
+      console.error
+    );
   }
 
   return (
@@ -41,26 +61,36 @@ export default function AssinaturasPage() {
         onSubmit={handleSubmit}
         className="rounded-2xl border border-line bg-surface p-4 mb-6 space-y-2"
       >
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
           <input
             placeholder="Nome (ex: Netflix)"
             value={nome}
             onChange={(e) => setNome(e.target.value)}
-            className="sm:col-span-2 rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-brand"
+            className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-brand"
           />
-          <div className="flex gap-2">
-            <MoneyInput
-              value={valor}
-              onChange={setValor}
-              className="flex-1 rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-brand"
-            />
-            <button
-              type="submit"
-              className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-[#0E0F0C] hover:bg-brand-dark transition-colors"
-            >
-              +
-            </button>
-          </div>
+          <MoneyInput
+            value={valor}
+            onChange={setValor}
+            className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-brand"
+          />
+          <select
+            value={cartao}
+            onChange={(e) => setCartao(e.target.value)}
+            className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-brand"
+          >
+            <option value="">Sem cartão</option>
+            {CARTOES_PREDEFINIDOS.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+          <button
+            type="submit"
+            className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-[#0E0F0C] hover:bg-brand-dark transition-colors"
+          >
+            Adicionar
+          </button>
         </div>
         <label className="flex items-center gap-2 text-xs text-text-muted cursor-pointer w-fit">
           <input
@@ -87,17 +117,35 @@ export default function AssinaturasPage() {
           Nenhuma assinatura cadastrada.
         </p>
       ) : (
-        <ul className="space-y-2">
-          {assinaturas.map((a) => (
-            <ItemAssinatura
-              key={a.id}
-              assinatura={a}
-              onEditar={editar}
-              onRemover={remover}
-              onAlternarAtiva={alternarAtiva}
-            />
+        <div className="space-y-5">
+          {grupos.map(([grupoCartao, itens]) => (
+            <div key={grupoCartao}>
+              <div className="flex items-center justify-between mb-2 px-1">
+                <h2 className="text-sm font-medium text-text-muted">
+                  💳 {grupoCartao}
+                </h2>
+                <span className="text-xs text-text-faint">
+                  {formatarMoeda(
+                    itens
+                      .filter((a) => a.ativa && !a.naFatura)
+                      .reduce((acc, a) => acc + a.valor, 0)
+                  )}
+                </span>
+              </div>
+              <ul className="space-y-2">
+                {itens.map((a) => (
+                  <ItemAssinatura
+                    key={a.id}
+                    assinatura={a}
+                    onEditar={editar}
+                    onRemover={remover}
+                    onAlternarAtiva={alternarAtiva}
+                  />
+                ))}
+              </ul>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );
@@ -112,7 +160,12 @@ function ItemAssinatura({
   assinatura: Assinatura;
   onEditar: (
     id: string,
-    dados: { nome: string; valor: number; naFatura?: boolean }
+    dados: {
+      nome: string;
+      valor: number;
+      cartao?: string;
+      naFatura?: boolean;
+    }
   ) => void;
   onRemover: (id: string) => void;
   onAlternarAtiva: (id: string, ativa: boolean) => void;
@@ -120,12 +173,18 @@ function ItemAssinatura({
   const [editando, setEditando] = useState(false);
   const [nome, setNome] = useState(assinatura.nome);
   const [valor, setValor] = useState(assinatura.valor);
+  const [cartao, setCartao] = useState(assinatura.cartao ?? "");
   const [naFatura, setNaFatura] = useState(!!assinatura.naFatura);
 
   function salvar() {
     const nomeAparado = nome.trim();
     if (!nomeAparado || !valor) return;
-    onEditar(assinatura.id, { nome: nomeAparado, valor, naFatura });
+    onEditar(assinatura.id, {
+      nome: nomeAparado,
+      valor,
+      cartao: cartao || undefined,
+      naFatura,
+    });
     setEditando(false);
   }
 
@@ -143,6 +202,18 @@ function ItemAssinatura({
             onChange={setValor}
             className="w-full sm:w-32 rounded-lg border border-line bg-surface-2 px-2 py-1.5 text-sm outline-none focus:border-brand"
           />
+          <select
+            value={cartao}
+            onChange={(e) => setCartao(e.target.value)}
+            className="w-full sm:w-40 rounded-lg border border-line bg-surface-2 px-2 py-1.5 text-sm outline-none focus:border-brand"
+          >
+            <option value="">Sem cartão</option>
+            {CARTOES_PREDEFINIDOS.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
         </div>
         <label className="flex items-center gap-2 text-xs text-text-muted cursor-pointer w-fit">
           <input

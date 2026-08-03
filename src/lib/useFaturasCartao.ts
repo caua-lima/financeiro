@@ -1,19 +1,22 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import {
-  collection,
-  onSnapshot,
-  addDoc,
-  deleteDoc,
-  doc,
-  updateDoc,
-} from "firebase/firestore";
+import { collection, onSnapshot, doc, setDoc } from "firebase/firestore";
 import { db } from "./firebase";
 import { FaturaCartao } from "./types";
+import { CARTOES_PREDEFINIDOS } from "./cartoes";
 import { useAuth } from "./AuthContext";
 import { mensagemErro } from "./erroFirebase";
 
+function chave(mes: string, cartao: string) {
+  return `${mes}__${cartao}`;
+}
+
+/**
+ * Sempre retorna os 6 cartões pré-definidos pro mês, zerados quando
+ * ainda não foi lançado nada. Salvar é sempre um upsert por
+ * mes+cartão, não existe "adicionar" nem "excluir".
+ */
 export function useFaturasCartao(mes: string) {
   const { user } = useAuth();
   const [todas, setTodas] = useState<FaturaCartao[]>([]);
@@ -39,46 +42,28 @@ export function useFaturasCartao(mes: string) {
     return unsubscribe;
   }, [user]);
 
-  const faturas = useMemo(
-    () =>
-      todas
-        .filter((f) => f.mes === mes)
-        .sort((a, b) => b.criadoEm - a.criadoEm),
-    [todas, mes]
-  );
-
-  async function adicionar(nome: string, valor: number) {
-    if (!user) return;
-    try {
-      await addDoc(collection(db, "usuarios", user.uid, "faturasCartao"), {
-        nome,
-        valor,
-        mes,
-        criadoEm: Date.now(),
-      });
-      setErro(null);
-    } catch (e) {
-      setErro(mensagemErro(e));
-    }
-  }
-
-  async function editar(id: string, dados: { nome: string; valor: number }) {
-    if (!user) return;
-    try {
-      await updateDoc(
-        doc(db, "usuarios", user.uid, "faturasCartao", id),
-        dados
+  const faturas = useMemo(() => {
+    return CARTOES_PREDEFINIDOS.map((cartao) => {
+      const existente = todas.find((f) => f.mes === mes && f.nome === cartao);
+      return (
+        existente ?? {
+          id: chave(mes, cartao),
+          nome: cartao,
+          valor: 0,
+          mes,
+          criadoEm: 0,
+        }
       );
-      setErro(null);
-    } catch (e) {
-      setErro(mensagemErro(e));
-    }
-  }
+    });
+  }, [todas, mes]);
 
-  async function remover(id: string) {
+  async function salvar(cartao: string, valor: number) {
     if (!user) return;
     try {
-      await deleteDoc(doc(db, "usuarios", user.uid, "faturasCartao", id));
+      await setDoc(
+        doc(db, "usuarios", user.uid, "faturasCartao", chave(mes, cartao)),
+        { nome: cartao, valor, mes, criadoEm: Date.now() }
+      );
       setErro(null);
     } catch (e) {
       setErro(mensagemErro(e));
@@ -87,5 +72,5 @@ export function useFaturasCartao(mes: string) {
 
   const total = faturas.reduce((acc, f) => acc + f.valor, 0);
 
-  return { faturas, loading, erro, total, adicionar, editar, remover };
+  return { faturas, loading, erro, total, salvar };
 }

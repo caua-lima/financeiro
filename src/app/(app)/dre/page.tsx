@@ -256,17 +256,19 @@ export default function DrePage() {
             total={totalFaturas}
             corTotal="text-gold"
           >
-            {faturas.faturas.length === 0 ? (
+            {faturas.faturas.filter((f) => f.valor > 0).length === 0 ? (
               <Vazio />
             ) : (
-              faturas.faturas.map((f: FaturaCartao) => (
-                <ItemLinha
-                  key={f.id}
-                  nome={f.nome}
-                  valor={f.valor}
-                  cor="text-gold"
-                />
-              ))
+              faturas.faturas
+                .filter((f: FaturaCartao) => f.valor > 0)
+                .map((f: FaturaCartao) => (
+                  <ItemLinha
+                    key={f.id}
+                    nome={f.nome}
+                    valor={f.valor}
+                    cor="text-gold"
+                  />
+                ))
             )}
           </Secao>
 

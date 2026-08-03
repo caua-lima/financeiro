@@ -43,6 +43,7 @@ export interface Assinatura {
   nome: string;
   valor: number;
   ativa: boolean;
+  cartao?: string; // qual dos CARTOES_PREDEFINIDOS ela é cobrada
   naFatura?: boolean; // já contabilizada dentro do valor lançado em "Fatura do cartão" — não soma de novo
   criadoEm: number;
 }
