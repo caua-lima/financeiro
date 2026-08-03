@@ -63,7 +63,7 @@ export default function GanhosPage() {
           />
           <button
             type="submit"
-            className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-[#04120e] hover:bg-brand-dark transition-colors"
+            className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-[#0E0F0C] hover:bg-brand-dark transition-colors"
           >
             Adicionar
           </button>
@@ -223,7 +223,7 @@ function ItemGanho({
         <div className="flex gap-2 shrink-0">
           <button
             onClick={salvar}
-            className="rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-[#04120e]"
+            className="rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-[#0E0F0C]"
           >
             Salvar
           </button>

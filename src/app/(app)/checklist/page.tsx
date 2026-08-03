@@ -11,6 +11,7 @@ import { iconeCategoria } from "@/lib/categorias";
 import { useContasFixas } from "@/lib/useContasFixas";
 import { useAssinaturas } from "@/lib/useAssinaturas";
 import { useParcelas } from "@/lib/useParcelas";
+import { useFaturasCartao } from "@/lib/useFaturasCartao";
 import { usePagamentos, OrigemItem } from "@/lib/usePagamentos";
 import { MonthSelector } from "@/components/MonthSelector";
 import { ErroBanner } from "@/components/ErroBanner";
@@ -28,15 +29,21 @@ export default function ChecklistPage() {
   const contas = useContasFixas();
   const assinaturas = useAssinaturas();
   const parcelas = useParcelas();
+  const faturas = useFaturasCartao(mes);
   const pagamentos = usePagamentos(mes);
 
   const loading =
     contas.loading ||
     assinaturas.loading ||
     parcelas.loading ||
+    faturas.loading ||
     pagamentos.loading;
   const erro =
-    contas.erro || assinaturas.erro || parcelas.erro || pagamentos.erro;
+    contas.erro ||
+    assinaturas.erro ||
+    parcelas.erro ||
+    faturas.erro ||
+    pagamentos.erro;
 
   const grupos = useMemo(() => {
     const itensContas: ItemChecklist[] = contas.contas
@@ -74,12 +81,26 @@ export default function ChecklistPage() {
         };
       });
 
+    const itensFaturas: ItemChecklist[] = faturas.faturas.map((f) => ({
+      id: f.id,
+      origem: "fatura" as const,
+      nome: f.nome,
+      valor: f.valor,
+    }));
+
     return [
       { titulo: "Contas fixas", itens: itensContas },
       { titulo: "Assinaturas", itens: itensAssinaturas },
       { titulo: "Parcelas e financiamentos", itens: itensParcelas },
+      { titulo: "Fatura do cartão", itens: itensFaturas },
     ];
-  }, [contas.contas, assinaturas.assinaturas, parcelas.parcelas, mes]);
+  }, [
+    contas.contas,
+    assinaturas.assinaturas,
+    parcelas.parcelas,
+    faturas.faturas,
+    mes,
+  ]);
 
   const todosItens = grupos.flatMap((g) => g.itens);
   const totalGeral = todosItens.reduce((acc, i) => acc + i.valor, 0);

@@ -1,22 +1,16 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { formatarMoeda, Assinatura } from "@/lib/types";
-import { useAssinaturas } from "@/lib/useAssinaturas";
+import { mesPadrao, formatarMoeda, FaturaCartao } from "@/lib/types";
+import { useFaturasCartao } from "@/lib/useFaturasCartao";
+import { MonthSelector } from "@/components/MonthSelector";
 import { MoneyInput } from "@/components/MoneyInput";
 import { ErroBanner } from "@/components/ErroBanner";
 
-export default function AssinaturasPage() {
-  const {
-    assinaturas,
-    loading,
-    erro,
-    total,
-    adicionar,
-    editar,
-    remover,
-    alternarAtiva,
-  } = useAssinaturas();
+export default function FaturaPage() {
+  const [mes, setMes] = useState(mesPadrao());
+  const { faturas, loading, erro, total, adicionar, editar, remover } =
+    useFaturasCartao(mes);
 
   const [nome, setNome] = useState("");
   const [valor, setValor] = useState(0);
@@ -32,7 +26,11 @@ export default function AssinaturasPage() {
 
   return (
     <div>
-      <h1 className="text-lg font-semibold mb-4">Assinaturas</h1>
+      <h1 className="text-lg font-semibold mb-1">Fatura do cartão</h1>
+      <p className="text-xs text-text-faint mb-4">
+        Lance o valor total da fatura de cada cartão neste mês
+      </p>
+      <MonthSelector mes={mes} onChange={setMes} />
       <ErroBanner mensagem={erro} />
 
       <form
@@ -40,7 +38,7 @@ export default function AssinaturasPage() {
         className="rounded-2xl border border-line bg-surface p-4 mb-6 grid grid-cols-1 sm:grid-cols-3 gap-2"
       >
         <input
-          placeholder="Nome (ex: Netflix)"
+          placeholder="Cartão (ex: Nubank)"
           value={nome}
           onChange={(e) => setNome(e.target.value)}
           className="sm:col-span-2 rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-brand"
@@ -49,6 +47,7 @@ export default function AssinaturasPage() {
           <MoneyInput
             value={valor}
             onChange={setValor}
+            placeholder="Valor da fatura"
             className="flex-1 rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-brand"
           />
           <button
@@ -61,7 +60,7 @@ export default function AssinaturasPage() {
       </form>
 
       <div className="rounded-2xl border border-line bg-surface p-4 mb-6 flex justify-between items-center">
-        <span className="text-sm text-text-muted">Total ativo mensal</span>
+        <span className="text-sm text-text-muted">Total em faturas do mês</span>
         <span className="text-lg font-semibold text-gold">
           {formatarMoeda(total)}
         </span>
@@ -69,19 +68,18 @@ export default function AssinaturasPage() {
 
       {loading ? (
         <p className="text-sm text-text-faint">Carregando...</p>
-      ) : assinaturas.length === 0 ? (
+      ) : faturas.length === 0 ? (
         <p className="text-sm text-text-faint">
-          Nenhuma assinatura cadastrada.
+          Nenhuma fatura lançada neste mês.
         </p>
       ) : (
         <ul className="space-y-2">
-          {assinaturas.map((a) => (
-            <ItemAssinatura
-              key={a.id}
-              assinatura={a}
+          {faturas.map((f) => (
+            <ItemFatura
+              key={f.id}
+              fatura={f}
               onEditar={editar}
               onRemover={remover}
-              onAlternarAtiva={alternarAtiva}
             />
           ))}
         </ul>
@@ -90,25 +88,23 @@ export default function AssinaturasPage() {
   );
 }
 
-function ItemAssinatura({
-  assinatura,
+function ItemFatura({
+  fatura,
   onEditar,
   onRemover,
-  onAlternarAtiva,
 }: {
-  assinatura: Assinatura;
+  fatura: FaturaCartao;
   onEditar: (id: string, dados: { nome: string; valor: number }) => void;
   onRemover: (id: string) => void;
-  onAlternarAtiva: (id: string, ativa: boolean) => void;
 }) {
   const [editando, setEditando] = useState(false);
-  const [nome, setNome] = useState(assinatura.nome);
-  const [valor, setValor] = useState(assinatura.valor);
+  const [nome, setNome] = useState(fatura.nome);
+  const [valor, setValor] = useState(fatura.valor);
 
   function salvar() {
     const nomeAparado = nome.trim();
     if (!nomeAparado || !valor) return;
-    onEditar(assinatura.id, { nome: nomeAparado, valor });
+    onEditar(fatura.id, { nome: nomeAparado, valor });
     setEditando(false);
   }
 
@@ -144,23 +140,11 @@ function ItemAssinatura({
   }
 
   return (
-    <li
-      className={`flex items-center justify-between gap-2 rounded-xl border bg-surface px-4 py-3 ${
-        assinatura.ativa ? "border-line" : "border-line-soft opacity-50"
-      }`}
-    >
-      <label className="flex items-center gap-3 min-w-0 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={assinatura.ativa}
-          onChange={(e) => onAlternarAtiva(assinatura.id, e.target.checked)}
-          className="h-4 w-4 shrink-0 accent-brand"
-        />
-        <span className="text-sm truncate">{assinatura.nome}</span>
-      </label>
+    <li className="flex items-center justify-between gap-2 rounded-xl border border-line bg-surface px-4 py-3">
+      <span className="text-sm truncate">{fatura.nome}</span>
       <div className="flex items-center gap-3 shrink-0">
         <span className="text-sm font-medium text-gold">
-          {formatarMoeda(assinatura.valor)}
+          {formatarMoeda(fatura.valor)}
         </span>
         <button
           onClick={() => setEditando(true)}
@@ -170,7 +154,7 @@ function ItemAssinatura({
           ✎
         </button>
         <button
-          onClick={() => onRemover(assinatura.id)}
+          onClick={() => onRemover(fatura.id)}
           className="text-text-faint hover:text-negative text-sm"
           aria-label="Remover"
         >

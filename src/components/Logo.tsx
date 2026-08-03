@@ -1,5 +1,5 @@
 export function Logo({ size = "sm" }: { size?: "sm" | "lg" }) {
-  const iconBox = size === "lg" ? 52 : 34;
+  const iconBox = size === "lg" ? 40 : 26;
   const word = size === "lg" ? "text-2xl" : "text-base";
   const handle = size === "lg" ? "text-xs" : "text-[10px]";
 
@@ -11,36 +11,19 @@ export function Logo({ size = "sm" }: { size?: "sm" | "lg" }) {
         viewBox="0 0 40 40"
         className="shrink-0"
       >
-        <defs>
-          <linearGradient id="logoGrad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#17c3a2" />
-            <stop offset="100%" stopColor="#e0b356" />
-          </linearGradient>
-        </defs>
-        <rect width="40" height="40" rx="11" fill="url(#logoGrad)" />
         <path
-          d="M12 24.5L17 19.5L21.5 23L28 15"
-          stroke="#04120e"
-          strokeWidth="2.4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
-        />
-        <path
-          d="M23 15H28V20"
-          stroke="#04120e"
-          strokeWidth="2.4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
+          d="M6 6H34V14L14 26H34V34H6V26L26 14H6V6Z"
+          fill="var(--color-brand)"
         />
       </svg>
       <div className="leading-none">
-        <p className={`font-semibold tracking-tight text-text ${word}`}>
+        <p
+          className={`font-heading font-bold tracking-tight text-text ${word}`}
+        >
           financeiro
         </p>
         <p
-          className={`font-medium uppercase tracking-[0.18em] text-gold ${handle}`}
+          className={`font-medium uppercase tracking-[0.18em] text-brand ${handle}`}
         >
           caualimavd
         </p>

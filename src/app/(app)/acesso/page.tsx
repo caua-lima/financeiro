@@ -130,7 +130,7 @@ export default function AcessoPage() {
         <button
           type="submit"
           disabled={criando}
-          className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-[#04120e] hover:bg-brand-dark transition-colors disabled:opacity-50"
+          className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-[#0E0F0C] hover:bg-brand-dark transition-colors disabled:opacity-50"
         >
           {criando ? "Criando..." : "Criar login"}
         </button>
@@ -224,7 +224,7 @@ function ItemUsuario({
           <button
             onClick={salvar}
             disabled={salvando}
-            className="rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-[#04120e] disabled:opacity-50"
+            className="rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-[#0E0F0C] disabled:opacity-50"
           >
             {salvando ? "Salvando..." : "Salvar"}
           </button>

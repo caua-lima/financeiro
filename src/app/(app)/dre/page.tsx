@@ -11,12 +11,14 @@ import {
   ContaFixa,
   Assinatura,
   Parcela,
+  FaturaCartao,
 } from "@/lib/types";
 import { iconeCategoria, CATEGORIAS_CONTAS } from "@/lib/categorias";
 import { useGanhos } from "@/lib/useGanhos";
 import { useContasFixas } from "@/lib/useContasFixas";
 import { useAssinaturas } from "@/lib/useAssinaturas";
 import { useParcelas } from "@/lib/useParcelas";
+import { useFaturasCartao } from "@/lib/useFaturasCartao";
 import { MonthSelector } from "@/components/MonthSelector";
 import { ErroBanner } from "@/components/ErroBanner";
 
@@ -37,10 +39,20 @@ export default function DrePage() {
   const contas = useContasFixas();
   const assinaturas = useAssinaturas();
   const parcelas = useParcelas();
+  const faturas = useFaturasCartao(mes);
 
   const loading =
-    ganhos.loading || contas.loading || assinaturas.loading || parcelas.loading;
-  const erro = ganhos.erro || contas.erro || assinaturas.erro || parcelas.erro;
+    ganhos.loading ||
+    contas.loading ||
+    assinaturas.loading ||
+    parcelas.loading ||
+    faturas.loading;
+  const erro =
+    ganhos.erro ||
+    contas.erro ||
+    assinaturas.erro ||
+    parcelas.erro ||
+    faturas.erro;
 
   const contasPorCategoria = useMemo(() => {
     const grupos = agruparPorChave(contas.contas, (c) => c.categoria);
@@ -74,7 +86,9 @@ export default function DrePage() {
     (acc, p) => acc + valorMinhaParte(p),
     0
   );
-  const totalDespesas = totalContas + totalAssinaturas + totalParcelas;
+  const totalFaturas = faturas.total;
+  const totalDespesas =
+    totalContas + totalAssinaturas + totalParcelas + totalFaturas;
   const resultado = ganhos.totalLiquido - totalDespesas;
 
   return (
@@ -224,6 +238,26 @@ export default function DrePage() {
             ))}
           </Secao>
 
+          {/* FATURA DO CARTÃO */}
+          <Secao
+            titulo="Fatura do cartão"
+            total={totalFaturas}
+            corTotal="text-gold"
+          >
+            {faturas.faturas.length === 0 ? (
+              <Vazio />
+            ) : (
+              faturas.faturas.map((f: FaturaCartao) => (
+                <ItemLinha
+                  key={f.id}
+                  nome={f.nome}
+                  valor={f.valor}
+                  cor="text-gold"
+                />
+              ))
+            )}
+          </Secao>
+
           {/* RESUMO FINAL */}
           <div className="rounded-2xl border border-line bg-surface p-4">
             <h2 className="text-sm font-medium text-text-muted mb-3">
@@ -234,6 +268,7 @@ export default function DrePage() {
               <LinhaResumo label="Contas fixas" valor={totalContas} sinal="-" />
               <LinhaResumo label="Assinaturas" valor={totalAssinaturas} sinal="-" />
               <LinhaResumo label="Parcelas e financiamentos" valor={totalParcelas} sinal="-" />
+              <LinhaResumo label="Fatura do cartão" valor={totalFaturas} sinal="-" />
               <div className="border-t border-line pt-2 flex justify-between font-semibold">
                 <span>Resultado do mês</span>
                 <span className={resultado >= 0 ? "text-positive" : "text-negative"}>
