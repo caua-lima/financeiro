@@ -111,15 +111,22 @@ export function useAssinaturas() {
     }
   }
 
-  const total = assinaturas
-    .filter((a) => a.ativa && !a.naFatura)
+  const ativas = assinaturas.filter((a) => a.ativa);
+  const total = ativas
+    .filter((a) => !a.naFatura)
     .reduce((acc, a) => acc + a.valor, 0);
+  const totalNaFatura = ativas
+    .filter((a) => a.naFatura)
+    .reduce((acc, a) => acc + a.valor, 0);
+  const totalGeral = total + totalNaFatura;
 
   return {
     assinaturas,
     loading,
     erro,
     total,
+    totalNaFatura,
+    totalGeral,
     adicionar,
     editar,
     remover,

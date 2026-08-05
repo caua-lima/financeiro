@@ -27,6 +27,8 @@ export default function AssinaturasPage() {
     loading,
     erro,
     total,
+    totalNaFatura,
+    totalGeral,
     adicionar,
     editar,
     remover,
@@ -103,11 +105,31 @@ export default function AssinaturasPage() {
         </label>
       </form>
 
-      <div className="rounded-2xl border border-line bg-surface p-4 mb-6 flex justify-between items-center">
-        <span className="text-sm text-text-muted">Total ativo mensal</span>
-        <span className="text-lg font-semibold text-gold">
-          {formatarMoeda(total)}
-        </span>
+      <div className="rounded-2xl border border-line bg-surface p-4 mb-6 space-y-2">
+        <div className="flex justify-between items-center">
+          <span className="text-sm text-text-muted">
+            Total ativo mensal (fora da fatura)
+          </span>
+          <span className="text-lg font-semibold text-gold">
+            {formatarMoeda(total)}
+          </span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-sm text-text-muted">
+            Já incluso em fatura do cartão
+          </span>
+          <span className="text-sm font-medium text-text-faint">
+            {formatarMoeda(totalNaFatura)}
+          </span>
+        </div>
+        <div className="flex justify-between items-center border-t border-line pt-2">
+          <span className="text-sm text-text-muted">
+            Total real em assinaturas
+          </span>
+          <span className="text-sm font-semibold text-text">
+            {formatarMoeda(totalGeral)}
+          </span>
+        </div>
       </div>
 
       {loading ? (
@@ -127,7 +149,7 @@ export default function AssinaturasPage() {
                 <span className="text-xs text-text-faint">
                   {formatarMoeda(
                     itens
-                      .filter((a) => a.ativa && !a.naFatura)
+                      .filter((a) => a.ativa)
                       .reduce((acc, a) => acc + a.valor, 0)
                   )}
                 </span>
