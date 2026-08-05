@@ -13,6 +13,7 @@ import { useContasFixas } from "@/lib/useContasFixas";
 import { useParcelas } from "@/lib/useParcelas";
 import { useAssinaturas } from "@/lib/useAssinaturas";
 import { useFaturasCartao } from "@/lib/useFaturasCartao";
+import { useGastos } from "@/lib/useGastos";
 import { MonthSelector } from "@/components/MonthSelector";
 import { ErroBanner } from "@/components/ErroBanner";
 
@@ -23,6 +24,15 @@ export default function DashboardPage() {
   const parcelas = useParcelas();
   const assinaturas = useAssinaturas();
   const faturas = useFaturasCartao(mes);
+  const gastosHook = useGastos();
+
+  const totalGastosNoMes = useMemo(
+    () =>
+      gastosHook.gastos
+        .filter((g) => g.mes === mes)
+        .reduce((acc, g) => acc + g.valor, 0),
+    [gastosHook.gastos, mes]
+  );
 
   const totalParcelasNoMes = useMemo(
     () =>
@@ -41,15 +51,22 @@ export default function DashboardPage() {
     contas.total -
     totalParcelasNoMes -
     assinaturas.total -
-    faturas.total;
+    faturas.total -
+    totalGastosNoMes;
   const carregando =
     ganhos.loading ||
     contas.loading ||
     parcelas.loading ||
     assinaturas.loading ||
-    faturas.loading;
+    faturas.loading ||
+    gastosHook.loading;
   const erro =
-    ganhos.erro || contas.erro || parcelas.erro || assinaturas.erro || faturas.erro;
+    ganhos.erro ||
+    contas.erro ||
+    parcelas.erro ||
+    assinaturas.erro ||
+    faturas.erro ||
+    gastosHook.erro;
 
   return (
     <div>
@@ -77,7 +94,7 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
             <ResumoCard
               label="Ganhos brutos"
               valor={ganhos.total}
@@ -106,6 +123,11 @@ export default function DashboardPage() {
             <ResumoCard
               label="Fatura cartão"
               valor={faturas.total}
+              cor="text-gold"
+            />
+            <ResumoCard
+              label="Gastos do dia a dia"
+              valor={totalGastosNoMes}
               cor="text-gold"
             />
           </div>
@@ -140,6 +162,11 @@ export default function DashboardPage() {
               <Linha
                 label="Fatura do cartão"
                 valor={faturas.total}
+                sinal="-"
+              />
+              <Linha
+                label="Gastos do dia a dia"
+                valor={totalGastosNoMes}
                 sinal="-"
               />
               <div className="border-t border-line pt-2 flex justify-between font-semibold">

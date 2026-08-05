@@ -17,12 +17,19 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Financeiro",
   description: "Controle financeiro pessoal",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Financeiro",
+  },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
+  viewportFit: "cover",
+  themeColor: "#0E0F0C",
 };
 
 export default function RootLayout({

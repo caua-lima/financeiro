@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { Logo } from "./Logo";
 import {
   IconResumo,
+  IconSaldo,
   IconGanhos,
   IconContas,
   IconParcelas,
@@ -25,11 +26,17 @@ const secoes = [
   {
     titulo: "Movimentações",
     itens: [
+      { href: "/saldo", label: "Saldo e gastos", labelMobile: "Saldo", Icon: IconSaldo },
       { href: "/ganhos", label: "Ganhos", Icon: IconGanhos },
       { href: "/contas", label: "Contas", Icon: IconContas },
       { href: "/parcelas", label: "Parcelas", Icon: IconParcelas },
       { href: "/assinaturas", label: "Assinaturas", Icon: IconAssinaturas },
-      { href: "/fatura", label: "Fatura do cartão", Icon: IconFatura },
+      {
+        href: "/fatura",
+        label: "Fatura do cartão",
+        labelMobile: "Fatura",
+        Icon: IconFatura,
+      },
     ],
   },
   {
@@ -114,18 +121,18 @@ export function Nav() {
 
       {/* Tab bar — mobile */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-10 flex overflow-x-auto border-t border-line bg-sidebar/95 backdrop-blur pb-[env(safe-area-inset-bottom)]">
-        {linksFlat.map(({ href, label, Icon }) => {
+        {linksFlat.map(({ href, label, labelMobile, Icon }) => {
           const ativo = pathname === href;
           return (
             <Link
               key={href}
               href={href}
-              className={`flex w-16 shrink-0 flex-col items-center gap-1 py-2.5 text-[11px] transition-colors ${
+              className={`flex w-16 shrink-0 flex-col items-center gap-1 py-2.5 text-[11px] whitespace-nowrap transition-colors ${
                 ativo ? "text-brand" : "text-text-faint"
               }`}
             >
               <Icon width={20} height={20} />
-              {label}
+              {labelMobile ?? label}
             </Link>
           );
         })}
