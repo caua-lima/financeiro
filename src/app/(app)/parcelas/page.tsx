@@ -3,6 +3,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import {
   formatarMoeda,
+  formatarMes,
   mesPadrao,
   parcelasRestantesEm,
   Parcela,
@@ -246,8 +247,11 @@ function GrupoParcelas({
 }) {
   if (itens.length === 0) return null;
 
-  const subtotal = itens
-    .filter((p) => p.parcelasRestantes > 0 && !p.naFatura)
+  const ativas = itens.filter((p) => p.parcelasRestantes > 0);
+  const quitadas = itens.filter((p) => p.parcelasRestantes === 0);
+
+  const subtotal = ativas
+    .filter((p) => !p.naFatura)
     .reduce((acc, p) => acc + valorMinhaParte(p), 0);
 
   return (
@@ -258,19 +262,87 @@ function GrupoParcelas({
           {formatarMoeda(subtotal)}
         </span>
       </div>
-      <ul className="space-y-2">
-        {itens.map((p) => (
-          <ItemParcela
-            key={p.id}
-            parcela={p}
-            mes={mes}
-            onEditar={onEditar}
-            onRemover={onRemover}
-            onDarBaixa={onDarBaixa}
-          />
-        ))}
-      </ul>
+      {ativas.length > 0 && (
+        <ul className="space-y-2">
+          {ativas.map((p) => (
+            <ItemParcela
+              key={p.id}
+              parcela={p}
+              mes={mes}
+              onEditar={onEditar}
+              onRemover={onRemover}
+              onDarBaixa={onDarBaixa}
+            />
+          ))}
+        </ul>
+      )}
+      {quitadas.length > 0 && (
+        <div className="mt-3">
+          <p className="px-1 mb-1.5 text-[11px] font-medium uppercase tracking-wide text-text-faint">
+            Quitadas
+          </p>
+          <ul className="space-y-1.5">
+            {quitadas.map((p) => (
+              <ItemParcelaQuitada
+                key={p.id}
+                parcela={p}
+                onEditar={onEditar}
+                onRemover={onRemover}
+              />
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
+  );
+}
+
+function ItemParcelaQuitada({
+  parcela,
+  onEditar,
+  onRemover,
+}: {
+  parcela: Parcela;
+  onEditar: (id: string, dados: DadosEdicaoParcela) => void;
+  onRemover: (id: string) => void;
+}) {
+  return (
+    <li className="flex items-center justify-between gap-2 rounded-xl border border-line-soft bg-surface-2/40 px-4 py-2.5 opacity-60">
+      <div className="min-w-0">
+        <p className="text-sm text-text-faint truncate">{parcela.nome}</p>
+        <p className="text-xs text-text-faint">
+          {parcela.totalParcelas} de {parcela.totalParcelas} pagas
+          {parcela.cartao ? ` · ${parcela.cartao}` : ""}
+        </p>
+      </div>
+      <div className="flex items-center gap-3 shrink-0">
+        <button
+          onClick={() =>
+            onEditar(parcela.id, {
+              nome: parcela.nome,
+              valorParcela: parcela.valorParcela,
+              totalParcelas: parcela.totalParcelas,
+              parcelasRestantes: 1,
+              tipo: parcela.tipo,
+              dividida: parcela.dividida,
+              naFatura: parcela.naFatura,
+              cartao: parcela.cartao,
+            })
+          }
+          className="text-xs text-text-faint hover:text-brand"
+          title="Reabrir (voltar 1 parcela)"
+        >
+          reabrir
+        </button>
+        <button
+          onClick={() => onRemover(parcela.id)}
+          className="text-text-faint hover:text-negative text-sm"
+          aria-label="Remover"
+        >
+          ✕
+        </button>
+      </div>
+    </li>
   );
 }
 
@@ -303,6 +375,7 @@ function ItemParcela({
 
   const restantesNoMes = parcelasRestantesEm(parcela, mes);
   const numeroNoMes = parcela.totalParcelas - restantesNoMes + 1;
+  const ehMesAtual = mes === mesPadrao();
 
   function salvar() {
     const nomeAparado = nome.trim();
@@ -489,9 +562,13 @@ function ItemParcela({
         )}
       </div>
       <p className="text-xs text-info mt-1">
-        {restantesNoMes > 0
-          ? `neste mês: parcela ${numeroNoMes} de ${parcela.totalParcelas}`
-          : "neste mês: já quitada"}
+        {ehMesAtual
+          ? restantesNoMes > 0
+            ? `este mês: parcela ${numeroNoMes} de ${parcela.totalParcelas}`
+            : "quitada"
+          : restantesNoMes > 0
+          ? `previsão pra ${formatarMes(mes)}: parcela ${numeroNoMes} de ${parcela.totalParcelas} (se pagar 1 por mês)`
+          : `previsão: já estaria quitada em ${formatarMes(mes)} — só confirmado quando você de fato pagar`}
       </p>
     </li>
   );
