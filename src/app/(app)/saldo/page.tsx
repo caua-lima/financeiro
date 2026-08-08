@@ -12,6 +12,7 @@ import { useSaldo } from "@/lib/useSaldo";
 import { useGastos } from "@/lib/useGastos";
 import { MoneyInput } from "@/components/MoneyInput";
 import { ErroBanner } from "@/components/ErroBanner";
+import { ConfirmModal } from "@/components/ConfirmModal";
 
 function agruparPorCategoria(gastos: Gasto[]) {
   const grupos = new Map<string, Gasto[]>();
@@ -34,7 +35,7 @@ export default function SaldoPage() {
     erro: erroGastos,
     adicionar,
     editar,
-    remover,
+    estornar,
   } = useGastos();
 
   const [texto, setTexto] = useState("");
@@ -213,7 +214,7 @@ export default function SaldoPage() {
                     key={g.id}
                     gasto={g}
                     onEditar={editar}
-                    onRemover={remover}
+                    onEstornar={estornar}
                   />
                 ))}
               </ul>
@@ -228,19 +229,23 @@ export default function SaldoPage() {
 function ItemGasto({
   gasto,
   onEditar,
-  onRemover,
+  onEstornar,
 }: {
   gasto: Gasto;
   onEditar: (
     id: string,
     dados: { descricao: string; valor: number; categoria: string }
   ) => void;
-  onRemover: (id: string) => void;
+  onEstornar: (id: string, motivo: string) => void;
 }) {
   const [editando, setEditando] = useState(false);
+  const [confirmando, setConfirmando] = useState(false);
   const [descricao, setDescricao] = useState(gasto.descricao);
   const [valor, setValor] = useState(gasto.valor);
   const [categoria, setCategoria] = useState(gasto.categoria);
+
+  const ehEstorno = !!gasto.estornoDeId;
+  const bloqueado = gasto.estornado || ehEstorno;
 
   function salvar() {
     const descAparada = descricao.trim();
@@ -294,27 +299,67 @@ function ItemGasto({
   }
 
   return (
-    <li className="flex items-center justify-between gap-2 rounded-xl border border-line bg-surface px-4 py-3">
-      <span className="text-sm truncate">{gasto.descricao}</span>
+    <li
+      className={`flex items-center justify-between gap-2 rounded-xl border px-4 py-3 ${
+        bloqueado
+          ? "border-line-soft bg-surface-2/50"
+          : "border-line bg-surface"
+      }`}
+    >
+      <span
+        className={`text-sm truncate ${
+          gasto.estornado ? "line-through text-text-faint" : ehEstorno ? "italic text-text-faint" : ""
+        }`}
+      >
+        {gasto.descricao}
+        {gasto.estornado && (
+          <span className="ml-2 text-[10px] uppercase tracking-wide text-negative">estornado</span>
+        )}
+        {ehEstorno && (
+          <span className="ml-2 text-[10px] uppercase tracking-wide text-info">estorno</span>
+        )}
+      </span>
       <div className="flex items-center gap-3 shrink-0">
-        <span className="text-sm font-medium text-gold">
+        <span
+          className={`text-sm font-medium ${
+            gasto.valor < 0 ? "text-positive" : bloqueado ? "text-text-faint" : "text-gold"
+          }`}
+        >
           {formatarMoeda(gasto.valor)}
         </span>
-        <button
-          onClick={() => setEditando(true)}
-          className="text-text-faint hover:text-brand text-sm"
-          aria-label="Editar"
-        >
-          ✎
-        </button>
-        <button
-          onClick={() => onRemover(gasto.id)}
-          className="text-text-faint hover:text-negative text-sm"
-          aria-label="Remover"
-        >
-          ✕
-        </button>
+        {!bloqueado && (
+          <>
+            <button
+              onClick={() => setEditando(true)}
+              className="text-text-faint hover:text-brand text-sm"
+              aria-label="Editar"
+            >
+              ✎
+            </button>
+            <button
+              onClick={() => setConfirmando(true)}
+              className="text-text-faint hover:text-negative text-sm"
+              aria-label="Estornar"
+            >
+              ✕
+            </button>
+          </>
+        )}
       </div>
+
+      <ConfirmModal
+        aberto={confirmando}
+        titulo="Estornar gasto"
+        descricao={`"${gasto.descricao}" continua no histórico, mas um lançamento de estorno devolve ${formatarMoeda(gasto.valor)} pro seu saldo.`}
+        textoConfirmar="Estornar"
+        perigo
+        pedirMotivo
+        onConfirmar={(motivo) => {
+          onEstornar(gasto.id, motivo ?? "");
+          setConfirmando(false);
+        }}
+        onCancelar={() => setConfirmando(false)}
+      />
     </li>
   );
 }

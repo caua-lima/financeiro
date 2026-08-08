@@ -5,14 +5,15 @@ import {
   collection,
   onSnapshot,
   addDoc,
-  deleteDoc,
   doc,
   updateDoc,
+  writeBatch,
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { Gasto, mesPadrao } from "./types";
 import { useAuth } from "./AuthContext";
 import { mensagemErro } from "./erroFirebase";
+import { anexarAuditLog } from "./auditoria";
 
 export function useGastos() {
   const { user } = useAuth();
@@ -71,15 +72,46 @@ export function useGastos() {
     }
   }
 
-  async function remover(id: string) {
+  /**
+   * Gasto já é dinheiro que saiu de verdade — não apaga, estorna: mantém o
+   * lançamento original (marcado `estornado`) e cria uma contrapartida
+   * negativa rastreável, que é o que efetivamente devolve o valor pro
+   * saldo. Bloqueia estornar duas vezes o mesmo gasto.
+   */
+  async function estornar(id: string, motivo: string) {
     if (!user) return;
+    const original = todos.find((g) => g.id === id);
+    if (!original || original.estornado || original.estornoDeId) return;
     try {
-      await deleteDoc(doc(db, "usuarios", user.uid, "gastos", id));
+      const batch = writeBatch(db);
+      const refOriginal = doc(db, "usuarios", user.uid, "gastos", id);
+      batch.update(refOriginal, {
+        estornado: true,
+        estornadoEm: Date.now(),
+      });
+      const refEstorno = doc(collection(db, "usuarios", user.uid, "gastos"));
+      batch.set(refEstorno, {
+        descricao: `Estorno: ${original.descricao}`,
+        valor: -original.valor,
+        categoria: original.categoria,
+        mes: mesPadrao(),
+        criadoEm: Date.now(),
+        estornoDeId: id,
+      });
+      anexarAuditLog(batch, user.uid, user.email, {
+        action: "reversed",
+        entityType: "gasto",
+        entityId: id,
+        summary: `Estorno de "${original.descricao}": ${motivo}`,
+        before: { valor: original.valor, categoria: original.categoria },
+        after: { motivo },
+      });
+      await batch.commit();
       setErro(null);
     } catch (e) {
       setErro(mensagemErro(e));
     }
   }
 
-  return { gastos, loading, erro, adicionar, editar, remover };
+  return { gastos, loading, erro, adicionar, editar, estornar };
 }

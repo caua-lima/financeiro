@@ -64,6 +64,9 @@ export interface Gasto {
   categoria: string;
   mes: string;
   criadoEm: number;
+  estornado?: boolean; // true no lançamento original, depois que foi estornado
+  estornadoEm?: number;
+  estornoDeId?: string; // presente só na entrada de estorno — aponta pro gasto original
 }
 
 export function mesAtual(): string {
