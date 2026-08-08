@@ -52,7 +52,8 @@ export function useParcelas() {
     tipo: TipoParcela,
     dividida?: boolean,
     naFatura?: boolean,
-    cartao?: string
+    cartao?: string,
+    mesReferencia?: string
   ) {
     if (!user) return;
     try {
@@ -65,7 +66,7 @@ export function useParcelas() {
         dividida: !!dividida,
         naFatura: tipo === "cartao" ? !!naFatura : false,
         ...(tipo === "cartao" && cartao ? { cartao } : {}),
-        mesReferencia: mesPadrao(),
+        mesReferencia: mesReferencia ?? mesPadrao(),
         criadoEm: Date.now(),
       });
       setErro(null);
@@ -85,17 +86,18 @@ export function useParcelas() {
       dividida?: boolean;
       naFatura?: boolean;
       cartao?: string;
+      mesReferencia?: string;
     }
   ) {
     if (!user) return;
     try {
-      const { cartao, ...resto } = dados;
+      const { cartao, mesReferencia, ...resto } = dados;
       await updateDoc(doc(db, "usuarios", user.uid, "parcelas", id), {
         ...resto,
         dividida: !!dados.dividida,
         naFatura: dados.tipo === "cartao" ? !!dados.naFatura : false,
         cartao: dados.tipo === "cartao" && cartao ? cartao : null,
-        mesReferencia: mesPadrao(),
+        mesReferencia: mesReferencia ?? mesPadrao(),
       });
       setErro(null);
     } catch (e) {

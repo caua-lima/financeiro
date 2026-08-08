@@ -37,6 +37,7 @@ export default function ParcelasPage() {
   const [cartao, setCartao] = useState("");
   const [dividida, setDividida] = useState(false);
   const [naFatura, setNaFatura] = useState(false);
+  const [mesInicio, setMesInicio] = useState(mesPadrao());
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -59,8 +60,10 @@ export default function ParcelasPage() {
       tipo,
       dividida,
       naFatura,
-      cartao || undefined
+      cartao || undefined,
+      mesInicio
     ).catch(console.error);
+    setMesInicio(mesPadrao());
   }
 
   const grupos = useMemo(() => {
@@ -171,6 +174,13 @@ export default function ParcelasPage() {
           </label>
         )}
 
+        <div className="rounded-lg border border-line-soft bg-surface-2/50 px-3 py-2">
+          <p className="text-xs text-text-muted mb-1.5">
+            Mês da 1ª parcela que você vai pagar
+          </p>
+          <MonthSelector mes={mesInicio} onChange={setMesInicio} />
+        </div>
+
         <button
           type="submit"
           className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-[#0E0F0C] hover:bg-brand-dark transition-colors"
@@ -228,6 +238,7 @@ interface DadosEdicaoParcela {
   dividida?: boolean;
   naFatura?: boolean;
   cartao?: string;
+  mesReferencia?: string;
 }
 
 function GrupoParcelas({
@@ -327,6 +338,7 @@ function ItemParcelaQuitada({
               dividida: parcela.dividida,
               naFatura: parcela.naFatura,
               cartao: parcela.cartao,
+              mesReferencia: mesPadrao(),
             })
           }
           className="text-xs text-text-faint hover:text-brand"
@@ -372,6 +384,9 @@ function ItemParcela({
   const [cartao, setCartao] = useState(parcela.cartao ?? "");
   const [dividida, setDividida] = useState(!!parcela.dividida);
   const [naFatura, setNaFatura] = useState(!!parcela.naFatura);
+  const [mesReferencia, setMesReferencia] = useState(
+    parcela.mesReferencia ?? mesPadrao()
+  );
 
   const restantesNoMes = parcelasRestantesEm(parcela, mes);
   const numeroNoMes = parcela.totalParcelas - restantesNoMes + 1;
@@ -391,6 +406,7 @@ function ItemParcela({
       dividida,
       naFatura,
       cartao: cartao || undefined,
+      mesReferencia,
     });
     setEditando(false);
   }
@@ -483,6 +499,12 @@ function ItemParcela({
             Já está na fatura do cartão (não contar de novo no total)
           </label>
         )}
+        <div className="rounded-lg border border-line-soft bg-surface-2/50 px-3 py-2">
+          <p className="text-xs text-text-muted mb-1.5">
+            Mês em que &quot;faltam/pagas&quot; acima é válido
+          </p>
+          <MonthSelector mes={mesReferencia} onChange={setMesReferencia} />
+        </div>
         <div className="flex gap-2">
           <button
             onClick={salvar}
