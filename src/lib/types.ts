@@ -110,3 +110,55 @@ export const TAXA_IMPOSTO = 0.06;
 export function calcularImposto(valorBruto: number): number {
   return valorBruto * TAXA_IMPOSTO;
 }
+
+// ---------------------------------------------------------------------------
+// Modelo financeiro consolidado (FinancialEntry)
+//
+// As coleções antigas (ganhos, contasFixas, assinaturas, parcelas,
+// faturasCartao, gastos) continuam sendo a fonte de dados real no Firestore.
+// FinancialEntry é uma visão unificada, montada em memória por
+// src/lib/finance/adapters.ts, usada pra alimentar a Home, a Agenda e os
+// cálculos de saldo/fluxo de caixa sem precisar migrar nada.
+// ---------------------------------------------------------------------------
+
+export type FinancialEntryType = "income" | "expense" | "transfer";
+
+export type FinancialEntryStatus =
+  | "planned"
+  | "pending"
+  | "paid"
+  | "received"
+  | "cancelled"
+  | "archived";
+
+export type FinancialEntrySource =
+  | "manual"
+  | "income"
+  | "fixed_cost"
+  | "subscription"
+  | "installment"
+  | "card_bill"
+  | "adjustment"
+  | "transfer";
+
+export interface FinancialEntry {
+  id: string;
+  type: FinancialEntryType;
+  status: FinancialEntryStatus;
+  amount: number;
+  dueDate: string; // "YYYY-MM-DD"
+  paidAt?: string; // ISO
+  competenceMonth: string; // "YYYY-MM"
+  description: string;
+  categoryId: string;
+  accountId?: string;
+  cardId?: string;
+  installmentId?: string;
+  recurrenceId?: string;
+  source: FinancialEntrySource;
+  createdAt: number;
+  updatedAt: number;
+  archivedAt?: number;
+  cancelledAt?: number;
+  cancelledReason?: string;
+}

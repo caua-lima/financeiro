@@ -1,0 +1,127 @@
+import { FinancialEntry, formatarMoeda } from "@/lib/types";
+import { calculateOverdueEntries, calculateUpcomingCommitments } from "./calculations";
+
+/**
+ * Central de atenção — gera alertas a partir de dados que o app já tem hoje.
+ * Itens do briefing que dependem de dado que ainda não existe (receita
+ * prevista com data esperada, "uso percebido" de assinatura, duplicidade
+ * heurística) ficam de fora até a Fase 6 trazer esses campos — gerar um
+ * alerta com dado incompleto seria pior que não gerar nada.
+ */
+
+export type Severidade = "critical" | "warning" | "opportunity" | "info";
+
+export interface FinanceAlert {
+  key: string; // estável, pra permitir dispensar sem repetir
+  severidade: Severidade;
+  titulo: string;
+  contexto: string;
+  impacto: string;
+  cta: string;
+  href?: string;
+}
+
+export interface DadosAlertas {
+  entries: FinancialEntry[];
+  saldoProjetado: number | null;
+  hojeISO: string;
+  mes: string;
+  saldoAtualizadoEm: number | null; // timestamp da última conferência de saldo, ou null se nunca foi definido
+  reservaMinima?: number;
+  parcelasTerminando: { id: string; nome: string }[]; // parcelasRestantesEm(p, mes) === 1
+}
+
+export function gerarAlertas(dados: DadosAlertas): FinanceAlert[] {
+  const alertas: FinanceAlert[] = [];
+
+  const atrasados = calculateOverdueEntries(dados.entries, dados.hojeISO);
+  for (const e of atrasados) {
+    alertas.push({
+      key: `atrasado__${e.id}`,
+      severidade: "critical",
+      titulo: `${e.description} está atrasada`,
+      contexto: `Venceu em ${formatarDataCurta(e.dueDate)} e ainda não foi paga.`,
+      impacto: formatarMoeda(e.amount),
+      cta: "Marcar como paga",
+      href: "/checklist",
+    });
+  }
+
+  const proximos3Dias = calculateUpcomingCommitments(dados.entries, dados.hojeISO, 3);
+  for (const e of proximos3Dias) {
+    alertas.push({
+      key: `vence-em-breve__${e.id}`,
+      severidade: "warning",
+      titulo: `${e.description} vence em breve`,
+      contexto: `Vencimento em ${formatarDataCurta(e.dueDate)}.`,
+      impacto: formatarMoeda(e.amount),
+      cta: e.source === "card_bill" ? "Ver fatura" : "Ver checklist",
+      href: e.source === "card_bill" ? "/fatura" : "/checklist",
+    });
+  }
+
+  if (dados.saldoProjetado !== null && dados.saldoProjetado < 0) {
+    alertas.push({
+      key: `saldo-negativo__${dados.mes}`,
+      severidade: "critical",
+      titulo: "Saldo projetado fica negativo este mês",
+      contexto: "Somando o que falta pagar e receber, o mês fecha no vermelho.",
+      impacto: formatarMoeda(dados.saldoProjetado),
+      cta: "Ver detalhamento",
+      href: "/",
+    });
+  } else if (
+    dados.saldoProjetado !== null &&
+    dados.reservaMinima !== undefined &&
+    dados.saldoProjetado < dados.reservaMinima
+  ) {
+    alertas.push({
+      key: `abaixo-da-reserva__${dados.mes}`,
+      severidade: "warning",
+      titulo: "Saldo projetado abaixo da sua reserva mínima",
+      contexto: `Reserva configurada: ${formatarMoeda(dados.reservaMinima)}.`,
+      impacto: formatarMoeda(dados.saldoProjetado),
+      cta: "Rever compromissos do mês",
+      href: "/agenda",
+    });
+  }
+
+  if (dados.saldoAtualizadoEm === null) {
+    alertas.push({
+      key: `saldo-nunca-conferido`,
+      severidade: "info",
+      titulo: "Você ainda não conferiu o saldo real",
+      contexto: "Sem isso, o saldo disponível e o projetado ficam imprecisos.",
+      impacto: "—",
+      cta: "Conferir saldo",
+      href: "/saldo",
+    });
+  }
+
+  for (const p of dados.parcelasTerminando) {
+    alertas.push({
+      key: `parcela-terminando__${p.id}`,
+      severidade: "opportunity",
+      titulo: `${p.nome} está na última parcela`,
+      contexto: "Depois deste pagamento, o compromisso mensal desaparece do seu fluxo.",
+      impacto: "",
+      cta: "Ver parcela",
+      href: "/parcelas",
+    });
+  }
+
+  const ordemSeveridade: Record<Severidade, number> = {
+    critical: 0,
+    warning: 1,
+    opportunity: 2,
+    info: 3,
+  };
+  return alertas.sort(
+    (a, b) => ordemSeveridade[a.severidade] - ordemSeveridade[b.severidade]
+  );
+}
+
+function formatarDataCurta(iso: string): string {
+  const [, mes, dia] = iso.split("-");
+  return `${dia}/${mes}`;
+}
