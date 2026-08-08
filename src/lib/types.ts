@@ -141,6 +141,28 @@ export type FinancialEntrySource =
   | "adjustment"
   | "transfer";
 
+export interface AuditLog {
+  id: string;
+  action:
+    | "created"
+    | "updated"
+    | "archived"
+    | "cancelled"
+    | "reversed"
+    | "paid"
+    | "received"
+    | "reconciled"
+    | "closed_month";
+  entityType: string;
+  entityId: string;
+  summary: string;
+  actorUid: string;
+  actorEmail?: string;
+  before?: Record<string, unknown>;
+  after?: Record<string, unknown>;
+  createdAt: number;
+}
+
 export interface FinancialEntry {
   id: string;
   type: FinancialEntryType;
