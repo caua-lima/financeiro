@@ -1,225 +1,169 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import {
-  mesPadrao,
-  formatarMoeda,
-  parcelasRestantesEm,
-  valorMinhaParte,
-  TAXA_IMPOSTO,
-} from "@/lib/types";
-import { useGanhos } from "@/lib/useGanhos";
-import { useContasFixas } from "@/lib/useContasFixas";
-import { useParcelas } from "@/lib/useParcelas";
-import { useAssinaturas } from "@/lib/useAssinaturas";
-import { useFaturasCartao } from "@/lib/useFaturasCartao";
-import { useGastos } from "@/lib/useGastos";
+import { useState } from "react";
+import Link from "next/link";
+import { formatarMoeda, formatarMes, mesPadrao } from "@/lib/types";
+import { useFinanceDashboard } from "@/lib/finance/useFinanceDashboard";
 import { MonthSelector } from "@/components/MonthSelector";
 import { ErroBanner } from "@/components/ErroBanner";
+import { FinanceActionCenter } from "@/components/FinanceActionCenter";
+import { CashFlowChart } from "@/components/CashFlowChart";
+import { UpcomingList } from "@/components/UpcomingList";
+import { CategoryDonut } from "@/components/CategoryDonut";
+
+function hojeISO(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function formatarQuando(timestamp: number | null): string {
+  if (!timestamp) return "nunca conferido";
+  return new Date(timestamp).toLocaleString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 export default function DashboardPage() {
   const [mes, setMes] = useState(mesPadrao());
-  const ganhos = useGanhos(mes);
-  const contas = useContasFixas();
-  const parcelas = useParcelas();
-  const assinaturas = useAssinaturas();
-  const faturas = useFaturasCartao(mes);
-  const gastosHook = useGastos();
-
-  const totalGastosNoMes = useMemo(
-    () =>
-      gastosHook.gastos
-        .filter((g) => g.mes === mes)
-        .reduce((acc, g) => acc + g.valor, 0),
-    [gastosHook.gastos, mes]
-  );
-
-  const totalParcelasNoMes = useMemo(
-    () =>
-      parcelas.parcelas.reduce(
-        (acc, p) =>
-          parcelasRestantesEm(p, mes) > 0 && !p.naFatura
-            ? acc + valorMinhaParte(p)
-            : acc,
-        0
-      ),
-    [parcelas.parcelas, mes]
-  );
-
-  const sobra =
-    ganhos.totalLiquido -
-    contas.total -
-    totalParcelasNoMes -
-    assinaturas.total -
-    faturas.total -
-    totalGastosNoMes;
-  const carregando =
-    ganhos.loading ||
-    contas.loading ||
-    parcelas.loading ||
-    assinaturas.loading ||
-    faturas.loading ||
-    gastosHook.loading;
-  const erro =
-    ganhos.erro ||
-    contas.erro ||
-    parcelas.erro ||
-    assinaturas.erro ||
-    faturas.erro ||
-    gastosHook.erro;
+  const dash = useFinanceDashboard(mes);
 
   return (
-    <div>
-      <MonthSelector mes={mes} onChange={setMes} />
-      <ErroBanner mensagem={erro} />
-
-      {carregando ? (
-        <p className="text-sm text-text-faint">Carregando...</p>
-      ) : (
-        <div className="space-y-4">
-          <div
-            className={`rounded-2xl border p-6 text-center ${
-              sobra >= 0
-                ? "border-brand/25 bg-positive-soft"
-                : "border-negative/40 bg-negative-soft"
-            }`}
-          >
-            <p className="text-sm text-text-muted">Vai sobrar</p>
-            <p
-              className={`text-3xl font-bold mt-1 ${
-                sobra >= 0 ? "text-positive" : "text-negative"
-              }`}
-            >
-              {formatarMoeda(sobra)}
+    <div className="space-y-5">
+      {/* A. Cabeçalho */}
+      <div>
+        <div className="flex flex-wrap items-start justify-between gap-3 mb-1">
+          <div>
+            <h1 className="text-lg font-semibold">Resumo financeiro</h1>
+            <p className="text-xs text-text-faint mt-0.5">
+              {formatarMes(mes)} · saldo conferido em {formatarQuando(dash.ultimaAtualizacaoSaldo)}
             </p>
           </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
-            <ResumoCard
-              label="Ganhos brutos"
-              valor={ganhos.total}
-              cor="text-positive"
-            />
-            <ResumoCard
-              label={`Imposto (${(TAXA_IMPOSTO * 100).toFixed(0)}%)`}
-              valor={ganhos.imposto}
-              cor="text-negative"
-            />
-            <ResumoCard
-              label="Contas fixas"
-              valor={contas.total}
-              cor="text-gold"
-            />
-            <ResumoCard
-              label="Assinaturas"
-              valor={assinaturas.total}
-              cor="text-gold"
-            />
-            <ResumoCard
-              label="Parcelas"
-              valor={totalParcelasNoMes}
-              cor="text-gold"
-            />
-            <ResumoCard
-              label="Fatura cartão"
-              valor={faturas.total}
-              cor="text-gold"
-            />
-            <ResumoCard
-              label="Gastos do dia a dia"
-              valor={totalGastosNoMes}
-              cor="text-gold"
-            />
-          </div>
-
-          <div className="rounded-2xl border border-line bg-surface p-4">
-            <h2 className="text-sm font-medium text-text-muted mb-3">
-              Detalhamento
-            </h2>
-            <div className="space-y-2 text-sm">
-              <Linha label="Ganhos brutos" valor={ganhos.total} sinal="+" />
-              <Linha
-                label={`Imposto (${(TAXA_IMPOSTO * 100).toFixed(0)}%)`}
-                valor={ganhos.imposto}
-                sinal="-"
-                cor="text-negative"
-              />
-              <Linha
-                label="Contas fixas ativas"
-                valor={contas.total}
-                sinal="-"
-              />
-              <Linha
-                label="Assinaturas ativas"
-                valor={assinaturas.total}
-                sinal="-"
-              />
-              <Linha
-                label="Parcelas em andamento"
-                valor={totalParcelasNoMes}
-                sinal="-"
-              />
-              <Linha
-                label="Fatura do cartão"
-                valor={faturas.total}
-                sinal="-"
-              />
-              <Linha
-                label="Gastos do dia a dia"
-                valor={totalGastosNoMes}
-                sinal="-"
-              />
-              <div className="border-t border-line pt-2 flex justify-between font-semibold">
-                <span>Sobra</span>
-                <span className={sobra >= 0 ? "text-positive" : "text-negative"}>
-                  {formatarMoeda(sobra)}
-                </span>
-              </div>
-            </div>
+          <div className="flex gap-2">
+            <Link
+              href="/ganhos"
+              className="rounded-lg border border-line px-3 py-1.5 text-xs font-medium text-text-muted hover:border-brand/40 hover:text-text transition-colors"
+            >
+              + Receita
+            </Link>
+            <Link
+              href="/saldo"
+              className="rounded-lg border border-line px-3 py-1.5 text-xs font-medium text-text-muted hover:border-brand/40 hover:text-text transition-colors"
+            >
+              + Despesa
+            </Link>
+            <Link
+              href="/saldo"
+              className="rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-[#0E0F0C] hover:bg-brand-dark transition-colors"
+            >
+              Conferir saldo
+            </Link>
           </div>
         </div>
+        <MonthSelector mes={mes} onChange={setMes} />
+      </div>
+
+      <ErroBanner mensagem={dash.erro} />
+
+      {dash.loading ? (
+        <p className="text-sm text-text-faint">Carregando...</p>
+      ) : (
+        <>
+          {/* B. KPIs principais */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <KpiCard
+              label="Saldo disponível hoje"
+              valor={dash.saldoDisponivel}
+              explicacao="Só o que está conferido de verdade (Mercado Pago)"
+              tooltip="Saldo real informado, sem somar nada previsto"
+              cor="text-brand"
+            />
+            <KpiCard
+              label="Entradas previstas"
+              valor={dash.fluxoDoMes.income}
+              explicacao="Ganhos do mês, recebidos ou não"
+              tooltip="Soma de todos os ganhos ativos da competência"
+              cor="text-positive"
+            />
+            <KpiCard
+              label="Compromissos pendentes"
+              valor={dash.fluxoDoMes.expenses}
+              explicacao="Contas, assinaturas, parcelas, fatura e gastos"
+              tooltip="Soma de todas as despesas da competência, pagas ou não"
+              cor="text-gold"
+            />
+            <KpiCard
+              label="Saldo projetado"
+              valor={dash.saldoProjetado}
+              explicacao="Disponível + previsto a receber − a pagar"
+              tooltip="Saldo disponível + entradas previstas − compromissos pendentes"
+              cor={
+                dash.saldoProjetado !== null && dash.saldoProjetado < 0
+                  ? "text-negative"
+                  : "text-positive"
+              }
+              destaque
+            />
+          </div>
+
+          {/* C. Central de atenção */}
+          <div>
+            <h2 className="text-sm font-medium text-text-muted mb-2">Central de atenção</h2>
+            <FinanceActionCenter alertas={dash.alertas} />
+          </div>
+
+          {/* D. Fluxo de caixa */}
+          <CashFlowChart pontos={dash.fluxoDiario} entries={dash.entries} />
+
+          <div className="grid lg:grid-cols-2 gap-4">
+            {/* E. Próximos vencimentos */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-sm font-medium text-text-muted">Próximos vencimentos</h2>
+                <Link href="/checklist" className="text-xs text-brand hover:text-brand-dark">
+                  Ver checklist
+                </Link>
+              </div>
+              <UpcomingList itens={dash.proximosVencimentos} hojeISO={hojeISO()} />
+            </div>
+
+            {/* F. Distribuição de gastos */}
+            <CategoryDonut grupos={dash.distribuicaoGastos} />
+          </div>
+        </>
       )}
     </div>
   );
 }
 
-function ResumoCard({
+function KpiCard({
   label,
   valor,
+  explicacao,
+  tooltip,
   cor,
+  destaque,
 }: {
   label: string;
-  valor: number;
+  valor: number | null;
+  explicacao: string;
+  tooltip: string;
   cor: string;
+  destaque?: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-line bg-surface p-3 text-center">
+    <div
+      className={`rounded-2xl border p-4 ${
+        destaque ? "border-brand/25 bg-surface-elevated" : "border-line bg-surface"
+      }`}
+      title={tooltip}
+    >
       <p className="text-xs text-text-faint">{label}</p>
-      <p className={`text-sm font-semibold mt-1 ${cor}`}>
-        {formatarMoeda(valor)}
+      <p className={`text-2xl font-bold mt-1 ${valor === null ? "text-text-faint" : cor}`}>
+        {valor === null ? "—" : formatarMoeda(valor)}
       </p>
-    </div>
-  );
-}
-
-function Linha({
-  label,
-  valor,
-  sinal,
-  cor,
-}: {
-  label: string;
-  valor: number;
-  sinal: "+" | "-";
-  cor?: string;
-}) {
-  const corPadrao = sinal === "+" ? "text-positive" : "text-gold";
-  return (
-    <div className="flex justify-between text-text-muted">
-      <span>{label}</span>
-      <span className={cor ?? corPadrao}>
-        {sinal} {formatarMoeda(valor)}
-      </span>
+      <p className="text-[11px] text-text-faint mt-1">{explicacao}</p>
     </div>
   );
 }
